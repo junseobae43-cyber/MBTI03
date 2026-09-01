@@ -8,6 +8,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; user-select: none; }
     body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #0a0a0c; color: #fff; }
 
+    /* 게임 컨테이너 */
     #game-container {
       width: 800px;
       height: 500px;
@@ -15,9 +16,10 @@
       overflow: hidden;
       border-radius: 16px;
       box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
-      background: #1a1a1a;
+      background: #222;
     }
 
+    /* 배경 기본 색상 지정 */
     .scene-bg { 
       width: 100%; 
       height: 100%; 
@@ -26,11 +28,12 @@
       top: 0; 
       left: 0; 
       filter: brightness(0.85);
-      transition: background-image 0.5s ease;
+      background-color: #2b2b36;
     }
 
+    /* 캐릭터 영역 */
     .character { 
-      height: 95%; 
+      height: 90%; 
       position: absolute; 
       bottom: 0; 
       left: 50%; 
@@ -39,6 +42,7 @@
       pointer-events: none;
     }
 
+    /* 대화창 */
     .dialogue-box {
       position: absolute;
       bottom: 20px;
@@ -46,7 +50,7 @@
       transform: translateX(-50%);
       width: 90%;
       height: 130px;
-      background: rgba(18, 18, 24, 0.88);
+      background: rgba(18, 18, 24, 0.9);
       backdrop-filter: blur(12px);
       border: 2px solid rgba(255, 105, 180, 0.6);
       border-radius: 14px;
@@ -54,6 +58,7 @@
       color: #fff;
       cursor: pointer;
       box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      z-index: 2;
     }
 
     .name-tag { 
@@ -61,7 +66,6 @@
       font-size: 1.15rem; 
       color: #ff69b4; 
       margin-bottom: 8px; 
-      text-shadow: 0 0 8px rgba(255, 105, 180, 0.4);
     }
 
     .text-content { 
@@ -84,6 +88,7 @@
       50% { opacity: 1; }
     }
 
+    /* 선택지 */
     .choices-container {
       position: absolute;
       top: 45%;
@@ -115,6 +120,7 @@
       transform: scale(1.02); 
     }
 
+    /* 호감도 */
     .stats-overlay { 
       position: absolute; 
       top: 15px; 
@@ -132,7 +138,7 @@
 <body>
 
 <div id="game-container">
-  <img id="bg" class="scene-bg" src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1000" alt="학교">
+  <img id="bg" class="scene-bg" src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1000" alt="학교 배경">
   <img id="character" class="character" src="https://i.imgur.com/3932j64.png" alt="키타가와 마린" onerror="this.style.display='none'">
   
   <div class="stats-overlay">
@@ -141,7 +147,7 @@
 
   <div id="choices-container" class="choices-container" style="display: none;"></div>
 
-  <div id="dialogue-box" class="dialogue-box" onclick="handleDialogueClick()">
+  <div id="dialogue-box" class="dialogue-box">
     <div id="name-tag" class="name-tag">키타가와 마린</div>
     <div id="text-content" class="text-content"></div>
     <div id="click-prompt" class="click-prompt">클릭하여 진행 ▼</div>
@@ -149,14 +155,8 @@
 </div>
 
 <script>
-const gameState = {
-  affection: 0,
-  currentScene: 'school_gate'
-};
-
-// 스토리 데이터 구성
+// 스토리 데이터
 const storyData = {
-  // 1. 교문 앞 Encounter
   school_gate: {
     name: '키타가와 마린',
     text: '야호~! 좋은 아침! 교문 앞에서 딱 만나다니 대박 완전 운 좋다~!',
@@ -171,8 +171,6 @@ const storyData = {
       { text: '바빠서 아직 못 봤어.', nextScene: 'hallway_spoil', affectionDelta: 5 }
     ]
   },
-
-  // 2. 복도 이동 (리액션)
   hallway_excited: {
     name: '키타가와 마린',
     text: '그치 그치?! 특히 3분쯤에 나온 주인공 변신 장면! 나 진짜 소름 돋아서 세 번이나 돌려봤잖아~!',
@@ -185,8 +183,6 @@ const storyData = {
     nextScene: 'classroom_in',
     choices: []
   },
-
-  // 3. 교실 도착 후 연속 대화
   classroom_in: {
     name: '키타가와 마린',
     text: '아 맞다! 교실 들어온 김에 말하는 건데, 다음 코스프레 캐릭터 의상 재료 말이야...',
@@ -201,27 +197,30 @@ const storyData = {
       { text: '쉬는 시간엔 좀 자고 싶은데...', nextScene: 'ending_pout', affectionDelta: -5 }
     ]
   },
-
-  // 4. 엔딩 분기
   ending_happy: {
     name: '키타가와 마린',
     text: '아싸~! 역시 다정하다니까! 그럼 쉬는 시간 벨 울리자마자 바로 네 자리로 갈게!',
+    nextScene: null,
     choices: []
   },
   ending_pout: {
     name: '키타가와 마린',
     text: '에~ 피곤한 거야? 어쩔 수 없지... 그럼 졸릴 때 깨워줄 테니까 쉬어! 히히~',
+    nextScene: null,
     choices: []
   }
 };
 
-function renderScene(sceneKey) {
-  const scene = storyData[sceneKey];
+let affection = 0;
+let currentSceneKey = 'school_gate';
+
+function renderScene() {
+  const scene = storyData[currentSceneKey];
   if (!scene) return;
 
   document.getElementById('name-tag').innerText = scene.name;
   document.getElementById('text-content').innerText = scene.text;
-  document.getElementById('affection-score').innerText = gameState.affection;
+  document.getElementById('affection-score').innerText = affection;
 
   const choicesContainer = document.getElementById('choices-container');
   const clickPrompt = document.getElementById('click-prompt');
@@ -230,14 +229,16 @@ function renderScene(sceneKey) {
   if (scene.choices && scene.choices.length > 0) {
     choicesContainer.style.display = 'flex';
     clickPrompt.style.display = 'none';
-    
+
     scene.choices.forEach(choice => {
       const button = document.createElement('button');
       button.className = 'choice-btn';
       button.innerText = choice.text;
       button.onclick = (e) => {
         e.stopPropagation();
-        selectChoice(choice);
+        affection += choice.affectionDelta;
+        currentSceneKey = choice.nextScene;
+        renderScene();
       };
       choicesContainer.appendChild(button);
     });
@@ -247,23 +248,17 @@ function renderScene(sceneKey) {
   }
 }
 
-function selectChoice(choice) {
-  gameState.affection += choice.affectionDelta;
-  gameState.currentScene = choice.nextScene;
-  renderScene(choice.nextScene);
-}
-
-function handleDialogueClick() {
-  const current = storyData[gameState.currentScene];
-  // 선택지가 없는 대화창 클릭 시 다음 장면으로 이동
-  if (current && current.nextScene && (!current.choices || current.choices.length === 0)) {
-    gameState.currentScene = current.nextScene;
-    renderScene(current.nextScene);
+// 대화 상자 클릭 시 대사 진행
+document.getElementById('dialogue-box').onclick = function() {
+  const scene = storyData[currentSceneKey];
+  if (scene && scene.nextScene && (!scene.choices || scene.choices.length === 0)) {
+    currentSceneKey = scene.nextScene;
+    renderScene();
   }
-}
+};
 
-// 게임 시작
-renderScene('school_gate');
+// 최초 시작
+renderScene();
 </script>
 
 </body>
