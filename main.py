@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>그 비스크 돌은 사랑을 한다 - 준서 루트</title>
+  <title>그 비스크 돌은 사랑을 한다 - 학교 등교편</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; user-select: none; }
     body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #0a0a0c; color: #fff; }
 
-    /* 게임 화면 컨테이너 */
     #game-container {
       width: 800px;
       height: 500px;
@@ -19,7 +18,6 @@
       background: #1a1a1a;
     }
 
-    /* 배경 이미지 */
     .scene-bg { 
       width: 100%; 
       height: 100%; 
@@ -28,9 +26,9 @@
       top: 0; 
       left: 0; 
       filter: brightness(0.85);
+      transition: background-image 0.5s ease;
     }
 
-    /* 캐릭터 일러스트 */
     .character { 
       height: 95%; 
       position: absolute; 
@@ -41,7 +39,6 @@
       pointer-events: none;
     }
 
-    /* 대화창 상자 */
     .dialogue-box {
       position: absolute;
       bottom: 20px;
@@ -87,7 +84,6 @@
       50% { opacity: 1; }
     }
 
-    /* 선택지 메뉴 */
     .choices-container {
       position: absolute;
       top: 45%;
@@ -119,7 +115,6 @@
       transform: scale(1.02); 
     }
 
-    /* 호감도 표시 */
     .stats-overlay { 
       position: absolute; 
       top: 15px; 
@@ -137,8 +132,7 @@
 <body>
 
 <div id="game-container">
-  <img id="bg" class="scene-bg" src="https://images.unsplash.com/photo-1534447677768-be436bb09401?w=1000" alt="배경">
-  
+  <img id="bg" class="scene-bg" src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1000" alt="학교">
   <img id="character" class="character" src="https://i.imgur.com/3932j64.png" alt="키타가와 마린" onerror="this.style.display='none'">
   
   <div class="stats-overlay">
@@ -157,15 +151,120 @@
 <script>
 const gameState = {
   affection: 0,
-  currentScene: 'start'
+  currentScene: 'school_gate'
 };
 
+// 스토리 데이터 구성
 const storyData = {
-  start: {
+  // 1. 교문 앞 Encounter
+  school_gate: {
     name: '키타가와 마린',
-    text: '준서야! 오늘 방과 후에 시간 있어? 같이 코스프레 의상 재료 보러 가자!',
+    text: '야호~! 좋은 아침! 교문 앞에서 딱 만나다니 대박 완전 운 좋다~!',
+    nextScene: 'gate_talk',
+    choices: []
+  },
+  gate_talk: {
+    name: '키타가와 마린',
+    text: '같이 교실 올라가자! 어제 말했던 그 애니 최신화 봤어? 완전 대박이었는데!',
     choices: [
-      { text: '좋아! 같이 가자.', nextScene: 'agree', affectionDelta: 10 },
-      { text: '미안, 오늘은 좀 바쁜데...', nextScene: 'decline', affectionDelta: -5 }
+      { text: '응, 봤어! 연출 진짜 좋더라.', nextScene: 'hallway_excited', affectionDelta: 10 },
+      { text: '바빠서 아직 못 봤어.', nextScene: 'hallway_spoil', affectionDelta: 5 }
     ]
   },
+
+  // 2. 복도 이동 (리액션)
+  hallway_excited: {
+    name: '키타가와 마린',
+    text: '그치 그치?! 특히 3분쯤에 나온 주인공 변신 장면! 나 진짜 소름 돋아서 세 번이나 돌려봤잖아~!',
+    nextScene: 'classroom_in',
+    choices: []
+  },
+  hallway_spoil: {
+    name: '키타가와 마린',
+    text: '앗, 진짜?! 그럼 스포일러 안 하게 조심해야겠다! 오늘 집에 가자마자 꼭 봐야 해, 약속~!',
+    nextScene: 'classroom_in',
+    choices: []
+  },
+
+  // 3. 교실 도착 후 연속 대화
+  classroom_in: {
+    name: '키타가와 마린',
+    text: '아 맞다! 교실 들어온 김에 말하는 건데, 다음 코스프레 캐릭터 의상 재료 말이야...',
+    nextScene: 'classroom_talk2',
+    choices: []
+  },
+  classroom_talk2: {
+    name: '키타가와 마린',
+    text: '원단이 생각보다 복잡해서 고민이었거든? 혹시 쉬는 시간에 같이 인터넷으로 자재 좀 봐줄 수 있어?',
+    choices: [
+      { text: '좋아, 쉬는 시간에 같이 보자.', nextScene: 'ending_happy', affectionDelta: 15 },
+      { text: '쉬는 시간엔 좀 자고 싶은데...', nextScene: 'ending_pout', affectionDelta: -5 }
+    ]
+  },
+
+  // 4. 엔딩 분기
+  ending_happy: {
+    name: '키타가와 마린',
+    text: '아싸~! 역시 다정하다니까! 그럼 쉬는 시간 벨 울리자마자 바로 네 자리로 갈게!',
+    choices: []
+  },
+  ending_pout: {
+    name: '키타가와 마린',
+    text: '에~ 피곤한 거야? 어쩔 수 없지... 그럼 졸릴 때 깨워줄 테니까 쉬어! 히히~',
+    choices: []
+  }
+};
+
+function renderScene(sceneKey) {
+  const scene = storyData[sceneKey];
+  if (!scene) return;
+
+  document.getElementById('name-tag').innerText = scene.name;
+  document.getElementById('text-content').innerText = scene.text;
+  document.getElementById('affection-score').innerText = gameState.affection;
+
+  const choicesContainer = document.getElementById('choices-container');
+  const clickPrompt = document.getElementById('click-prompt');
+  choicesContainer.innerHTML = '';
+
+  if (scene.choices && scene.choices.length > 0) {
+    choicesContainer.style.display = 'flex';
+    clickPrompt.style.display = 'none';
+    
+    scene.choices.forEach(choice => {
+      const button = document.createElement('button');
+      button.className = 'choice-btn';
+      button.innerText = choice.text;
+      button.onclick = (e) => {
+        e.stopPropagation();
+        selectChoice(choice);
+      };
+      choicesContainer.appendChild(button);
+    });
+  } else {
+    choicesContainer.style.display = 'none';
+    clickPrompt.style.display = scene.nextScene ? 'block' : 'none';
+  }
+}
+
+function selectChoice(choice) {
+  gameState.affection += choice.affectionDelta;
+  gameState.currentScene = choice.nextScene;
+  renderScene(choice.nextScene);
+}
+
+function handleDialogueClick() {
+  const current = storyData[gameState.currentScene];
+  // 선택지가 없는 대화창 클릭 시 다음 장면으로 이동
+  if (current && current.nextScene && (!current.choices || current.choices.length === 0)) {
+    gameState.currentScene = current.nextScene;
+    renderScene(current.nextScene);
+  }
+}
+
+// 게임 시작
+renderScene('school_gate');
+</script>
+
+</body>
+</html>
