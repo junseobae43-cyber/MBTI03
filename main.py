@@ -22,7 +22,7 @@ game_html = """
     #game-box {
       width: 100%;
       max-width: 650px;
-      height: 560px;
+      height: 580px;
       background: linear-gradient(180deg, #232538 0%, #11111a 100%);
       border: 2px solid #ff69b4;
       border-radius: 16px;
@@ -36,9 +36,8 @@ game_html = """
       box-shadow: 0 10px 30px rgba(0,0,0,0.6);
     }
     
-    /* 애니메이션 마린 프레임 */
     #character-area {
-      height: 280px;
+      height: 300px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -46,24 +45,23 @@ game_html = """
       overflow: hidden;
       border-radius: 12px;
       background-color: #000;
-      border: 1px solid rgba(255, 105, 180, 0.3);
+      border: 1px solid rgba(255, 105, 180, 0.4);
     }
 
     #marin-img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center top;
+      object-position: center 20%;
       transition: opacity 0.25s ease-in-out;
     }
     
-    /* 대화 상자 */
     #dialogue-area {
       background-color: rgba(18, 18, 28, 0.92);
       border: 2px solid #ff69b4;
       border-radius: 12px;
       padding: 16px 20px;
-      min-height: 110px;
+      min-height: 100px;
       cursor: pointer;
       position: relative;
       z-index: 10;
@@ -81,7 +79,6 @@ game_html = """
       color: #f0f0f0;
     }
     
-    /* 선택지 */
     #choices {
       display: flex;
       flex-direction: column;
@@ -121,9 +118,8 @@ game_html = """
 <body>
 
 <div id="game-box">
-  <!-- 애니메이션 장면 연출 영역 -->
   <div id="character-area">
-    <img id="marin-img" src="" alt="키타가와 마린" onerror="this.src='https://images.alphacoders.com/121/thumb-1920-1216196.png'">
+    <img id="marin-img" src="" alt="키타가와 마린">
   </div>
   
   <div id="choices"></div>
@@ -136,17 +132,19 @@ game_html = """
 </div>
 
 <script>
-// 원작 애니메이션 장면 표정 맵핑 (상황별 이미지 경로)
+// 유저가 첨부한 마린 이미지 URL 적용
+var marinTargetImg = "https://i.ibb.co/6P30jS4/marin-user-img.jpg"; 
+
 var story = {
   step1: { 
     text: "야호~! 좋은 아침! 교문 앞에서 딱 만나다니 대박 완전 운 좋다~!", 
-    img: "https://images.alphacoders.com/121/thumb-1920-1216196.png", // 교복 브이 윙크 표정
+    img: marinTargetImg,
     next: "step2", 
     options: null 
   },
   step2: { 
     text: "같이 교실 올라가자! 어제 말했던 그 애니 최신화 봤어? 완전 대박이었는데!", 
-    img: "https://pic.rmb.bdstatic.com/bjh/93d2cb2f9b8764023eb29f55ef3b64c7.jpeg", // 밝게 웃는 모습
+    img: marinTargetImg,
     next: null, 
     options: [
       { msg: "응, 봤어! 연출 진짜 좋더라.", target: "step3_1" },
@@ -155,25 +153,25 @@ var story = {
   },
   step3_1: { 
     text: "그치 그치?! 특히 주인공 변신 장면! 나 진짜 소름 돋아서 세 번이나 돌려봤잖아~!", 
-    img: "https://w.wallhaven.cc/full/85/wallhaven-85m2ky.jpg", // 흥분한 신난 표정
+    img: marinTargetImg,
     next: "step4", 
     options: null 
   },
   step3_2: { 
     text: "앗, 진짜?! 그럼 스포일러 안 하게 조심해야겠다! 오늘 집에 가자마자 꼭 봐!", 
-    img: "https://images.alphacoders.com/121/thumb-1920-1216196.png", // 미소
+    img: marinTargetImg,
     next: "step4", 
     options: null 
   },
   step4: { 
     text: "아 맞다! 교실 들어온 김에 말하는 건데, 다음 코스프레 캐릭터 의상 재료 말이야...", 
-    img: "https://images6.alphacoders.com/121/thumb-1920-1215160.jpg", // 진지/수줍음
+    img: marinTargetImg,
     next: "step5", 
     options: null 
   },
   step5: { 
     text: "원단이 생각보다 복잡해서 그런데, 혹시 쉬는 시간에 같이 인터넷으로 자재 좀 봐줄 수 있어?", 
-    img: "https://images6.alphacoders.com/121/thumb-1920-1215160.jpg", // 부끄러워하는 표정
+    img: marinTargetImg,
     next: null, 
     options: [
       { msg: "좋아, 쉬는 시간에 같이 보자.", target: "end_happy" },
@@ -182,32 +180,53 @@ var story = {
   },
   end_happy: { 
     text: "아싸~! 역시 다정하다니까! 그럼 쉬는 시간 벨 울리자마자 바로 네 자리로 갈게!", 
-    img: "https://pic.rmb.bdstatic.com/bjh/93d2cb2f9b8764023eb29f55ef3b64c7.jpeg", // 활짝 웃는 표정
-    next: null, 
+    img: marinTargetImg,
+    next: "end_love", 
     options: null 
   },
   end_pout: { 
     text: "에~ 피곤한 거야? 어쩔 수 없지... 그럼 졸릴 때 깨워줄 테니까 편하게 쉬어! 히히~", 
-    img: "https://w.wallhaven.cc/full/85/wallhaven-85m2ky.jpg", // 아쉬운 삐침 표정
-    next: null, 
+    img: marinTargetImg,
+    next: "end_love", 
     options: null 
+  },
+  end_love: {
+    text: "그리고 있잖아... 준서야, 사랑해! ❤️",
+    img: marinTargetImg,
+    next: null,
+    options: null
   }
 };
 
 var currentStep = "step1";
 
+function speak(text) {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    var cleanText = text.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ\s]/g, "");
+    var utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = 'ko-KR';
+    utterance.pitch = 1.35; 
+    utterance.rate = 1.1;
+
+    var voices = window.speechSynthesis.getVoices();
+    for (var i = 0; i < voices.length; i++) {
+      if (voices[i].lang.includes('ko') && (voices[i].name.includes('Female') || voices[i].name.includes('SunHi') || voices[i].name.includes('Google'))) {
+        utterance.voice = voices[i];
+        break;
+      }
+    }
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
 function draw() {
   var data = story[currentStep];
-  
-  // 페이드 효과와 함께 마린 애니메이션 이미지 변경
   var imgEl = document.getElementById("marin-img");
-  imgEl.style.opacity = 0;
-  setTimeout(function() {
-    imgEl.src = data.img;
-    imgEl.style.opacity = 1;
-  }, 150);
+  imgEl.src = data.img;
 
   document.getElementById("text").innerText = data.text;
+  speak(data.text);
 
   var choiceDiv = document.getElementById("choices");
   var guideDiv = document.getElementById("guide");
@@ -237,10 +256,14 @@ function nextText() {
   }
 }
 
+if (speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = draw;
+}
+
 draw();
 </script>
 </body>
 </html>
 """
 
-components.html(game_html, height=600)
+components.html(game_html, height=620)
