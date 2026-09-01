@@ -132,7 +132,6 @@ game_html = """
 </div>
 
 <script>
-// 유저가 첨부한 마린 이미지 URL 적용
 var marinTargetImg = "https://i.ibb.co/6P30jS4/marin-user-img.jpg"; 
 
 var story = {
@@ -181,20 +180,14 @@ var story = {
   end_happy: { 
     text: "아싸~! 역시 다정하다니까! 그럼 쉬는 시간 벨 울리자마자 바로 네 자리로 갈게!", 
     img: marinTargetImg,
-    next: "end_love", 
+    next: null, 
     options: null 
   },
   end_pout: { 
     text: "에~ 피곤한 거야? 어쩔 수 없지... 그럼 졸릴 때 깨워줄 테니까 편하게 쉬어! 히히~", 
     img: marinTargetImg,
-    next: "end_love", 
+    next: null, 
     options: null 
-  },
-  end_love: {
-    text: "그리고 있잖아... 준서야, 사랑해! ❤️",
-    img: marinTargetImg,
-    next: null,
-    options: null
   }
 };
 
