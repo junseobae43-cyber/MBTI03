@@ -3,62 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>그 비스크 돌은 사랑을 한다 - 학교 등교편</title>
+  <title>그 비스크 돌은 사랑을 한다 - 등교편</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; user-select: none; }
-    body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #0a0a0c; color: #fff; }
+    body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #0f0f12; color: #fff; }
 
-    /* 게임 컨테이너 */
     #game-container {
       width: 800px;
       height: 500px;
       position: relative;
       overflow: hidden;
       border-radius: 16px;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
-      background: #222;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+      background: linear-gradient(135deg, #2b1055, #7597de);
     }
 
-    /* 배경 기본 색상 지정 */
+    /* SVG 배경 */
     .scene-bg { 
       width: 100%; 
       height: 100%; 
-      object-fit: cover; 
       position: absolute; 
       top: 0; 
       left: 0; 
-      filter: brightness(0.85);
-      background-color: #2b2b36;
     }
 
-    /* 캐릭터 영역 */
-    .character { 
-      height: 90%; 
-      position: absolute; 
-      bottom: 0; 
-      left: 50%; 
-      transform: translateX(-50%); 
-      transition: all 0.3s ease-in-out;
+    /* SVG 마린 캐릭터 */
+    .character-container {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 280px;
+      height: 380px;
       pointer-events: none;
+      transition: all 0.3s ease;
     }
 
     /* 대화창 */
     .dialogue-box {
       position: absolute;
-      bottom: 20px;
+      bottom: 15px;
       left: 50%;
       transform: translateX(-50%);
-      width: 90%;
-      height: 130px;
-      background: rgba(18, 18, 24, 0.9);
-      backdrop-filter: blur(12px);
-      border: 2px solid rgba(255, 105, 180, 0.6);
+      width: 92%;
+      height: 135px;
+      background: rgba(15, 15, 22, 0.92);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 105, 180, 0.7);
       border-radius: 14px;
       padding: 18px 24px;
       color: #fff;
       cursor: pointer;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-      z-index: 2;
+      z-index: 20;
     }
 
     .name-tag { 
@@ -66,12 +62,13 @@
       font-size: 1.15rem; 
       color: #ff69b4; 
       margin-bottom: 8px; 
+      text-shadow: 0 0 8px rgba(255, 105, 180, 0.5);
     }
 
     .text-content { 
       font-size: 1.05rem; 
       line-height: 1.6; 
-      color: #eaeaea;
+      color: #f0f0f0;
     }
 
     .click-prompt {
@@ -79,7 +76,7 @@
       bottom: 12px;
       right: 20px;
       font-size: 0.8rem;
-      color: rgba(255, 255, 255, 0.5);
+      color: #ff69b4;
       animation: blink 1.2s infinite;
     }
 
@@ -88,17 +85,17 @@
       50% { opacity: 1; }
     }
 
-    /* 선택지 */
+    /* 선택지 메뉴 */
     .choices-container {
       position: absolute;
-      top: 45%;
+      top: 40%;
       left: 50%;
       transform: translate(-50%, -50%);
       width: 75%;
       display: flex;
       flex-direction: column;
       gap: 12px;
-      z-index: 10;
+      z-index: 30;
     }
 
     .choice-btn {
@@ -111,7 +108,7 @@
       font-weight: 700;
       cursor: pointer;
       transition: all 0.2s ease;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
 
     .choice-btn:hover { 
@@ -120,26 +117,59 @@
       transform: scale(1.02); 
     }
 
-    /* 호감도 */
+    /* 상단 호감도 바 */
     .stats-overlay { 
       position: absolute; 
       top: 15px; 
       right: 20px; 
-      background: rgba(0, 0, 0, 0.65); 
+      background: rgba(0, 0, 0, 0.7); 
       padding: 8px 18px; 
       border-radius: 20px; 
       color: #ff69b4; 
       font-weight: bold;
-      border: 1px solid rgba(255, 105, 180, 0.4);
-      z-index: 5;
+      border: 1px solid rgba(255, 105, 180, 0.5);
+      z-index: 10;
     }
   </style>
 </head>
 <body>
 
 <div id="game-container">
-  <img id="bg" class="scene-bg" src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1000" alt="학교 배경">
-  <img id="character" class="character" src="https://i.imgur.com/3932j64.png" alt="키타가와 마린" onerror="this.style.display='none'">
+  <!-- 배경 SVG -->
+  <svg class="scene-bg" viewBox="0 0 800 500">
+    <rect width="800" height="500" fill="#1e1e2f"/>
+    <!-- 학교 건물 표현 -->
+    <rect x="100" y="100" width="600" height="400" fill="#2d2d44" rx="10"/>
+    <rect x="140" y="140" width="80" height="60" fill="#ffd700" opacity="0.6" rx="5"/>
+    <rect x="260" y="140" width="80" height="60" fill="#ffd700" opacity="0.8" rx="5"/>
+    <rect x="380" y="140" width="80" height="60" fill="#ffd700" opacity="0.4" rx="5"/>
+    <rect x="500" y="140" width="80" height="60" fill="#ffd700" opacity="0.7" rx="5"/>
+  </svg>
+  
+  <!-- 마린 캐릭터 SVG 일러스트 -->
+  <div class="character-container">
+    <svg viewBox="0 0 200 300" width="100%" height="100%">
+      <!-- 긴 금발 머리 -->
+      <path d="M 30,80 Q 10,180 35,290 L 165,290 Q 190,180 170,80 Z" fill="#ffe066"/>
+      <!-- 핑크 그라데이션 포인트 (투톤) -->
+      <path d="M 32,220 Q 25,260 35,290 L 165,290 Q 175,260 168,220 Z" fill="#ff99c8"/>
+      <!-- 얼굴 구조 -->
+      <ellipse cx="100" cy="100" rx="45" ry="50" fill="#ffede0"/>
+      <!-- 앞머리 -->
+      <path d="M 55,85 Q 100,60 145,85 Q 120,110 100,95 Q 80,110 55,85 Z" fill="#ffe066"/>
+      <!-- 눈 (적자색) -->
+      <ellipse cx="80" cy="100" rx="7" ry="10" fill="#d63384"/>
+      <ellipse cx="120" cy="100" rx="7" ry="10" fill="#d63384"/>
+      <circle cx="82" cy="98" r="2.5" fill="#fff"/>
+      <circle cx="122" cy="98" r="2.5" fill="#fff"/>
+      <!-- 입 (웃는 모양) -->
+      <path d="M 90,120 Q 100,130 110,120" stroke="#ff4d6d" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- 교복/셔츠 -->
+      <path d="M 55,145 L 145,145 L 160,290 L 40,290 Z" fill="#ffffff"/>
+      <!-- 넥타이 -->
+      <polygon points="100,145 106,210 100,225 94,210" fill="#495057"/>
+    </svg>
+  </div>
   
   <div class="stats-overlay">
     ♥ 호감도: <span id="affection-score">0</span>
@@ -150,12 +180,12 @@
   <div id="dialogue-box" class="dialogue-box">
     <div id="name-tag" class="name-tag">키타가와 마린</div>
     <div id="text-content" class="text-content"></div>
-    <div id="click-prompt" class="click-prompt">클릭하여 진행 ▼</div>
+    <div id="click-prompt" class="click-prompt">클릭하여 계속 ▼</div>
   </div>
 </div>
 
 <script>
-// 스토리 데이터
+// 게임 스토리 데이터
 const storyData = {
   school_gate: {
     name: '키타가와 마린',
@@ -205,7 +235,7 @@ const storyData = {
   },
   ending_pout: {
     name: '키타가와 마린',
-    text: '에~ 피곤한 거야? 어쩔 수 없지... 그럼 졸릴 때 깨워줄 테니까 쉬어! 히히~',
+    text: '에~ 피곤한 거야? 어쩔 수 없지... 그럼 졸릴 때 깨워줄 테니까 편하게 쉬어! 히히~',
     nextScene: null,
     choices: []
   }
@@ -248,7 +278,7 @@ function renderScene() {
   }
 }
 
-// 대화 상자 클릭 시 대사 진행
+// 화면 대화창 클릭 진행
 document.getElementById('dialogue-box').onclick = function() {
   const scene = storyData[currentSceneKey];
   if (scene && scene.nextScene && (!scene.choices || scene.choices.length === 0)) {
@@ -257,7 +287,7 @@ document.getElementById('dialogue-box').onclick = function() {
   }
 };
 
-// 최초 시작
+// 시작 실행
 renderScene();
 </script>
 
