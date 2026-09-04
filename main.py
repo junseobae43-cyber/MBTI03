@@ -7,19 +7,18 @@ st.set_page_config(
     layout="centered"
 )
 
-# 2. 세션 상태 초기화 (게임 진행 데이터)
+# 2. 세션 상태 초기화
 if "affection" not in st.session_state:
-    st.session_state.affection = 50  # 초기 호감도 (0 ~ 100)
+    st.session_state.affection = 50
 if "step" not in st.session_state:
-    st.session_state.step = 1       # 현재 대화 단계
+    st.session_state.step = 1
 
-# 3. 외부 이미지 URL (레포지토리에 파일을 넣지 않아도 되는 링크 방식)
-# 필요시 원하시는 다른 마린 이미지 URL로 언제든 교체 가능합니다.
-IMG_HAPPY = "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1000"
-IMG_BLUSH = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1000"
-IMG_SAD = "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?q=80&w=1000"
+# 3. 키타가와 마린 이미지 웹 URL
+IMG_HAPPY = "https://i.ibb.co/3kS4N0P/marin-happy.jpg"
+IMG_BLUSH = "https://i.ibb.co/9vM7JgY/marin-blush.jpg"
+IMG_SAD = "https://i.ibb.co/ZxbT4vD/marin-sad.jpg"
 
-# 4. 사이드바: 게임 정보 및 호감도 관리
+# 4. 사이드바: 호감도 관리
 st.sidebar.title("🎮 게임 상태")
 st.sidebar.subheader("키타가와 마린")
 
@@ -90,7 +89,7 @@ elif st.session_state.step == 3:
         st.session_state.step = 4
         st.rerun()
 
-# [단계 4] 엔딩 (호감도 결과에 따른 최종 표정)
+# [단계 4] 엔딩
 elif st.session_state.step == 4:
     st.subheader("🎬 엔딩")
 
