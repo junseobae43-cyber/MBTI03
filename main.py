@@ -14,9 +14,9 @@ if "step" not in st.session_state:
     st.session_state.step = 1
 
 # 3. 키타가와 마린 이미지 웹 URL
-IMG_HAPPY = "https://i.ibb.co/3kS4N0P/marin-happy.jpg"
-IMG_BLUSH = "https://i.ibb.co/9vM7JgY/marin-blush.jpg"
-IMG_SAD = "https://i.ibb.co/ZxbT4vD/marin-sad.jpg"
+IMG_HAPPY = "Gemini_Generated_Image_jc1x4pjc1x4pjc1x.png"
+IMG_BLUSH = "Gemini_Generated_Image_jc1x4pjc1x4pjc1x (1).png"
+IMG_SAD = "Gemini_Generated_Image_jc1x4pjc1x4pjc1x (2).png"
 
 # 4. 사이드바: 호감도 관리
 st.sidebar.title("🎮 게임 상태")
