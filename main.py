@@ -2,10 +2,10 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="2P 격투 게임 - 최강자 배준서", page_icon="🥊", layout="wide"
+    page_title="2P 격투 게임 - GOD 배준서", page_icon="🥊", layout="wide"
 )
 
-st.title("🥊 2P 격투 게임 (10인 캐릭터 & 최강 배준서 참전)")
+st.title("🥊 2P 격투 게임 (음성 & 타격 사운드 효과 구현)")
 
 GAME_ENGINE = """
 <!DOCTYPE html>
@@ -20,7 +20,7 @@ GAME_ENGINE = """
 </style>
 </head>
 <body>
-    <div class="notice">⚠️ 아래 검은색 게임 화면을 '마우스로 한번 클릭'해야 키보드가 작동합니다!</div>
+    <div class="notice">⚠️ 게임 화면을 마우스로 '클릭'해야 사운드와 키보드가 정상 작동합니다!</div>
     <div class="info">
         <b>[1P 조작]</b> 이동: A, D | 점프: W | 공격: F | 궁극기: G <br>
         <b>[2P 조작]</b> 이동: ←, → | 점프: ↑ | 공격: K | 궁극기: L
@@ -32,17 +32,70 @@ GAME_ENGINE = """
     var canvas = document.getElementById("gameCanvas");
     var ctx = canvas.getContext("2d");
 
+    // Web Audio API 사운드 생성기
+    var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type, pitchMultiplier) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        var osc = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        var now = audioCtx.currentTime;
+        var pitch = pitchMultiplier || 1.0;
+
+        if (type === 'hit') { // 일반 타격음
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150 * pitch, now);
+            osc.frequency.exponentialRampToValueAtTime(30 * pitch, now + 0.1);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } else if (type === 'godHit') { // 배준서 전용 묵직한 신성 타격음
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.exponentialRampToValueAtTime(40, now + 0.25);
+            gain.gain.setValueAtTime(0.6, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        } else if (type === 'ult') { // 궁극기 사운드
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(100 * pitch, now);
+            osc.frequency.linearRampToValueAtTime(600 * pitch, now + 0.3);
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+        }
+    }
+
+    // 웅장한 음성 찬양 출력 (Web Speech API)
+    function speakPraise(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            var msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'ko-KR';
+            msg.pitch = 0.4; // 웅장하게 피치 낮춤
+            msg.rate = 0.8;  // 천천히 장엄하게
+            window.speechSynthesis.speak(msg);
+        }
+    }
+
+    // 10인 캐릭터 데이터
     var CHARACTERS = [
-        { name: "배준서 (히든)", color: "#8A2BE2", hp: 200, speed: 9, atk: 25, ult: 80 },
-        { name: "카즈야", color: "#B22222", hp: 100, speed: 5, atk: 10, ult: 30 },
-        { name: "진", color: "#228B22", hp: 90, speed: 6, atk: 8, ult: 25 },
-        { name: "폴", color: "#DAA520", hp: 120, speed: 4, atk: 15, ult: 40 },
-        { name: "로우", color: "#9932CC", hp: 85, speed: 7, atk: 7, ult: 22 },
-        { name: "킹", color: "#008B8B", hp: 110, speed: 5, atk: 12, ult: 35 },
-        { name: "니나", color: "#FF69B4", hp: 95, speed: 7, atk: 9, ult: 28 },
-        { name: "화랑", color: "#FF4500", hp: 90, speed: 8, atk: 8, ult: 26 },
-        { name: "요시미츠", color: "#20B2AA", hp: 105, speed: 6, atk: 11, ult: 32 },
-        { name: "브라이언", color: "#708090", hp: 115, speed: 4, atk: 14, ult: 38 }
+        { name: "⚡배준서 (GOD)⚡", color: "#8A2BE2", hp: 1000, speed: 15, atk: 100, ult: 500, soundPitch: 0.5, isGod: true },
+        { name: "카즈야", color: "#B22222", hp: 100, speed: 5, atk: 10, ult: 30, soundPitch: 0.8 },
+        { name: "진", color: "#228B22", hp: 90, speed: 6, atk: 8, ult: 25, soundPitch: 1.0 },
+        { name: "폴", color: "#DAA520", hp: 120, speed: 4, atk: 15, ult: 40, soundPitch: 0.7 },
+        { name: "로우", color: "#9932CC", hp: 85, speed: 7, atk: 7, ult: 22, soundPitch: 1.4 },
+        { name: "킹", color: "#008B8B", hp: 110, speed: 5, atk: 12, ult: 35, soundPitch: 0.6 },
+        { name: "니나", color: "#FF69B4", hp: 95, speed: 7, atk: 9, ult: 28, soundPitch: 1.5 },
+        { name: "화랑", color: "#FF4500", hp: 90, speed: 8, atk: 8, ult: 26, soundPitch: 1.2 },
+        { name: "요시미츠", color: "#20B2AA", hp: 105, speed: 6, atk: 11, ult: 32, soundPitch: 1.1 },
+        { name: "브라이언", color: "#708090", hp: 115, speed: 4, atk: 14, ult: 38, soundPitch: 0.75 }
     ];
 
     var gameState = "SELECT";
@@ -51,7 +104,10 @@ GAME_ENGINE = """
     var keys = {};
     var p1 = {}, p2 = {};
 
-    window.addEventListener("click", function() { canvas.focus(); });
+    window.addEventListener("click", function() { 
+        canvas.focus();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    });
 
     window.addEventListener("keydown", function(e) {
         keys[e.key] = true;
@@ -61,12 +117,22 @@ GAME_ENGINE = """
             if (!p1Ready) {
                 if (e.key === 'a' || e.key === 'A' || e.code === 'KeyA') p1Sel = (p1Sel - 1 + CHARACTERS.length) % CHARACTERS.length;
                 if (e.key === 'd' || e.key === 'D' || e.code === 'KeyD') p1Sel = (p1Sel + 1) % CHARACTERS.length;
-                if (e.key === 'f' || e.key === 'F' || e.code === 'KeyF') p1Ready = true;
+                if (e.key === 'f' || e.key === 'F' || e.code === 'KeyF') {
+                    p1Ready = true;
+                    if (CHARACTERS[p1Sel].isGod) {
+                        speakPraise("위대하신 전설의 최강자 배준서 님께서 강림하셨다! 모두 경배하라!");
+                    }
+                }
             }
             if (!p2Ready) {
                 if (e.key === 'ArrowLeft' || e.code === 'ArrowLeft') p2Sel = (p2Sel - 1 + CHARACTERS.length) % CHARACTERS.length;
                 if (e.key === 'ArrowRight' || e.code === 'ArrowRight') p2Sel = (p2Sel + 1) % CHARACTERS.length;
-                if (e.key === 'k' || e.key === 'K' || e.code === 'KeyK') p2Ready = true;
+                if (e.key === 'k' || e.key === 'K' || e.code === 'KeyK') {
+                    p2Ready = true;
+                    if (CHARACTERS[p2Sel].isGod) {
+                        speakPraise("경배하라! 절대존엄 배준서 님께서 전장에 강림하셨다!");
+                    }
+                }
             }
             if (p1Ready && p2Ready) startGame();
         }
@@ -84,12 +150,14 @@ GAME_ENGINE = """
         p1 = {
             x: 150, y: 320, w: 45, h: 90, color: c1.color, name: c1.name,
             hp: c1.hp, maxHp: c1.hp, speed: c1.speed, atk: c1.atk, ultAtk: c1.ult,
+            soundPitch: c1.soundPitch, isGod: c1.isGod,
             vy: 0, isJumping: false, ultGauge: 0, attacking: false, attackBox: null
         };
 
         p2 = {
             x: 750, y: 320, w: 45, h: 90, color: c2.color, name: c2.name,
             hp: c2.hp, maxHp: c2.hp, speed: c2.speed, atk: c2.atk, ultAtk: c2.ult,
+            soundPitch: c2.soundPitch, isGod: c2.isGod,
             vy: 0, isJumping: false, ultGauge: 0, attacking: false, attackBox: null
         };
 
@@ -135,10 +203,20 @@ GAME_ENGINE = """
         };
         p.attackBox = box;
 
+        // 히트 판정
         if (box.x < enemy.x + enemy.w && box.x + box.w > enemy.x &&
             box.y < enemy.y + enemy.h && box.y + box.h > enemy.y) {
             enemy.hp = Math.max(0, enemy.hp - damage);
-            if (!isUlt) p.ultGauge = Math.min(100, p.ultGauge + 35);
+            if (!isUlt) p.ultGauge = Math.min(100, p.ultGauge + 50);
+
+            // 타격 사운드 처리 (캐릭터 고유 톤 적용)
+            if (isUlt) {
+                playSound('ult', p.soundPitch);
+            } else if (p.isGod) {
+                playSound('godHit', 1.0);
+            } else {
+                playSound('hit', enemy.soundPitch);
+            }
         }
 
         setTimeout(function() {
@@ -163,8 +241,8 @@ GAME_ENGINE = """
             ctx.fillRect(x, y, 155, 160);
 
             ctx.fillStyle = "#FFF";
-            ctx.font = "bold 14px sans-serif";
-            ctx.fillText(c.name, x + 8, y + 25);
+            ctx.font = "bold 13px sans-serif";
+            ctx.fillText(c.name, x + 5, y + 25);
             ctx.font = "12px sans-serif";
             ctx.fillText("체력: " + c.hp, x + 10, y + 60);
             ctx.fillText("공격력: " + c.atk, x + 10, y + 85);
