@@ -1,60 +1,78 @@
-import streamlit as st
-import streamlit.components.v1 as components
-
-# 1. 페이지 설정
-st.set_page_config(
-    page_title="2P 격투 게임 - 최강자 배준서", page_icon="🥊", layout="wide"
-)
-
-st.title("🥊 2P 격투 게임 (최강 히든: 배준서)")
-
-# 2. 게임 HTML/JS 실행
-GAME_CODE = """
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-<meta charset="utf-8">
-<style>
-    body { background-color: #111; color: white; text-align: center; font-family: sans-serif; margin: 0; padding: 0; }
-    canvas { background: #222; border: 4px solid #555; display: block; margin: 10px auto; }
-    .info { font-size: 14px; color: #ccc; margin-bottom: 5px; }
-</style>
+    <meta charset="UTF-8">
+    <title>2P 격투 게임 - 최강 배준서 참전</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 { margin-bottom: 10px; }
+        .controls {
+            background: #222;
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        canvas {
+            background: #1e1e1e;
+            border: 4px solid #444;
+            border-radius: 4px;
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+    </style>
 </head>
 <body>
-    <div class="info">
-        <b>[1P 조작]</b> 이동: A, D, W(점프) | 평타: F | 궁극기: G <br>
-        <b>[2P 조작]</b> 이동: ←, →, ↑(점프) | 평타: K | 궁극기: L
+
+    <h1>🥊 2P 스트리트 파이터 (최강 히든: 배준서)</h1>
+    <div class="controls">
+        <b>[1P 조작]</b> 이동: A, D | 점프: W | 평타: F | 궁극기: G <br>
+        <b>[2P 조작]</b> 이동: ←, → | 점프: ↑ | 평타: K | 궁극기: L
     </div>
-    <canvas id="gameCanvas" width="900" height="450"></canvas>
+
+    <canvas id="game" width="900" height="450"></canvas>
 
 <script>
-const canvas = document.getElementById("gameCanvas");
+const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+// 캐릭터 정보 (첫 번째가 최강 히든 캐릭터 '배준서')
 const CHARACTERS = [
-    { name: "Bae Jun-seo (HIDDEN)", color: "#8A2BE2", hp: 200, speed: 8, atk: 25, ult: 80 },
-    { name: "Kazuya", color: "#B22222", hp: 100, speed: 5, atk: 10, ult: 30 },
-    { name: "Jin", color: "#228B22", hp: 90, speed: 6, atk: 8, ult: 25 },
-    { name: "Paul", color: "#DAA520", hp: 120, speed: 4, atk: 15, ult: 40 },
-    { name: "Law", color: "#9932CC", hp: 85, speed: 7, atk: 7, ult: 22 }
+    { name: "배준서 (HIDDEN)", color: "#9b59b6", hp: 200, speed: 9, atk: 25, ult: 80 },
+    { name: "카즈야", color: "#e74c3c", hp: 100, speed: 5, atk: 10, ult: 30 },
+    { name: "진", color: "#2ecc71", hp: 90, speed: 6, atk: 8, ult: 25 },
+    { name: "폴", color: "#f1c40f", hp: 120, speed: 4, atk: 15, ult: 40 },
+    { name: "로우", color: "#e67e22", hp: 85, speed: 7, atk: 7, ult: 22 }
 ];
 
-let gameState = "SELECT";
+let state = "SELECT"; // SELECT -> PLAY -> END
 let p1Sel = 0, p2Sel = 1;
 let p1Ready = false, p2Ready = false;
-let keys = {};
+const keys = {};
+
 let p1 = {}, p2 = {};
 
-window.addEventListener("keydown", function(e) {
+window.addEventListener("keydown", e => {
     keys[e.key] = true;
     keys[e.key.toLowerCase()] = true;
 
-    if (gameState === "SELECT") {
+    if (state === "SELECT") {
+        // 1P 선택 (A/D로 이동, F로 확정)
         if (!p1Ready) {
             if (e.key === 'a' || e.key === 'A') p1Sel = (p1Sel - 1 + CHARACTERS.length) % CHARACTERS.length;
             if (e.key === 'd' || e.key === 'D') p1Sel = (p1Sel + 1) % CHARACTERS.length;
             if (e.key === 'f' || e.key === 'F') p1Ready = true;
         }
+        // 2P 선택 (화살표 좌우로 이동, K로 확정)
         if (!p2Ready) {
             if (e.key === 'ArrowLeft') p2Sel = (p2Sel - 1 + CHARACTERS.length) % CHARACTERS.length;
             if (e.key === 'ArrowRight') p2Sel = (p2Sel + 1) % CHARACTERS.length;
@@ -64,7 +82,7 @@ window.addEventListener("keydown", function(e) {
     }
 });
 
-window.addEventListener("keyup", function(e) {
+window.addEventListener("keyup", e => {
     keys[e.key] = false;
     keys[e.key.toLowerCase()] = false;
 });
@@ -85,7 +103,7 @@ function startGame() {
         vy: 0, isJumping: false, ultGauge: 0, attacking: false, attackBox: null
     };
 
-    gameState = "PLAY";
+    state = "PLAY";
 }
 
 function updatePlayer(p, enemy, leftKey, rightKey, jumpKey, atkKey, ultKey) {
@@ -97,7 +115,7 @@ function updatePlayer(p, enemy, leftKey, rightKey, jumpKey, atkKey, ultKey) {
         p.isJumping = true;
     }
 
-    p.vy += 0.8;
+    p.vy += 0.8; // 중력
     p.y += p.vy;
 
     if (p.y >= 300) {
@@ -107,16 +125,18 @@ function updatePlayer(p, enemy, leftKey, rightKey, jumpKey, atkKey, ultKey) {
 
     p.x = Math.max(0, Math.min(canvas.width - p.w, p.x));
 
+    // 평타
     if (keys[atkKey] && !p.attacking) {
-        doAttack(p, enemy, p.atk, 60, false);
+        attack(p, enemy, p.atk, 60, false);
     }
+    // 궁극기
     if (keys[ultKey] && !p.attacking && p.ultGauge >= 100) {
-        doAttack(p, enemy, p.ultAtk, 120, true);
+        attack(p, enemy, p.ultAtk, 120, true);
         p.ultGauge = 0;
     }
 }
 
-function doAttack(p, enemy, damage, range, isUlt) {
+function attack(p, enemy, damage, range, isUlt) {
     p.attacking = true;
     const dir = p.x < enemy.x ? 1 : -1;
     const box = {
@@ -127,13 +147,14 @@ function doAttack(p, enemy, damage, range, isUlt) {
     };
     p.attackBox = box;
 
+    // 히트 판정
     if (box.x < enemy.x + enemy.w && box.x + box.w > enemy.x &&
         box.y < enemy.y + enemy.h && box.y + box.h > enemy.y) {
         enemy.hp = Math.max(0, enemy.hp - damage);
         if (!isUlt) p.ultGauge = Math.min(100, p.ultGauge + 35);
     }
 
-    setTimeout(function() {
+    setTimeout(() => {
         p.attacking = false;
         p.attackBox = null;
     }, 150);
@@ -142,73 +163,100 @@ function doAttack(p, enemy, damage, range, isUlt) {
 function drawSelectScreen() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#FFF";
-    ctx.font = "20px sans-serif";
-    ctx.fillText("Select Character (1P: A/D/F | 2P: Left/Right/K)", 220, 40);
+    ctx.font = "bold 22px sans-serif";
+    ctx.fillText("캐릭터 선택 (1P: A/D/F확정 | 2P: ←/→/K확정)", 220, 50);
 
-    CHARACTERS.forEach(function(c, i) {
-        const x = 50 + i * 165;
-        const y = 100;
+    CHARACTERS.forEach((c, i) => {
+        const x = 40 + i * 168;
+        const y = 110;
 
         ctx.fillStyle = c.color;
-        ctx.fillRect(x, y, 140, 200);
+        ctx.fillRect(x, y, 145, 210);
 
         ctx.fillStyle = "#FFF";
-        ctx.font = "13px sans-serif";
-        ctx.fillText(c.name, x + 5, y + 25);
-        ctx.fillText("HP: " + c.hp, x + 10, y + 70);
-        ctx.fillText("ATK: " + c.atk, x + 10, y + 100);
-        ctx.fillText("SPD: " + c.speed, x + 10, y + 130);
+        ctx.font = "bold 14px sans-serif";
+        ctx.fillText(c.name, x + 8, y + 30);
+        ctx.font = "12px sans-serif";
+        ctx.fillText("체력: " + c.hp, x + 10, y + 80);
+        ctx.fillText("공격력: " + c.atk, x + 10, y + 110);
+        ctx.fillText("속도: " + c.speed, x + 10, y + 140);
+        ctx.fillText("궁극기: " + c.ult, x + 10, y + 170);
 
         if (p1Sel === i) {
-            ctx.strokeStyle = "red";
-            ctx.lineWidth = 4;
-            ctx.strokeRect(x - 2, y - 2, 144, 204);
-            ctx.fillStyle = "red";
+            ctx.strokeStyle = "#e74c3c";
+            ctx.lineWidth = 5;
+            ctx.strokeRect(x - 3, y - 3, 151, 216);
+            ctx.fillStyle = "#e74c3c";
             ctx.fillText("1P", x + 10, y - 10);
         }
         if (p2Sel === i) {
-            ctx.strokeStyle = "cyan";
-            ctx.lineWidth = 4;
-            ctx.strokeRect(x - 4, y - 4, 148, 208);
-            ctx.fillStyle = "cyan";
-            ctx.fillText("2P", x + 100, y - 10);
+            ctx.strokeStyle = "#3498db";
+            ctx.lineWidth = 5;
+            ctx.strokeRect(x - 5, y - 5, 155, 220);
+            ctx.fillStyle = "#3498db";
+            ctx.fillText("2P", x + 110, y - 10);
         }
     });
 }
 
 function loop() {
-    if (gameState === "SELECT") {
+    if (state === "SELECT") {
         drawSelectScreen();
-    } else if (gameState === "PLAY") {
+    } else if (state === "PLAY") {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         updatePlayer(p1, p2, 'a', 'd', 'w', 'f', 'g');
         updatePlayer(p2, p1, 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'k', 'l');
 
-        ctx.strokeStyle = "#555";
+        // 바닥선
+        ctx.strokeStyle = "#666";
         ctx.lineWidth = 4;
         ctx.beginPath();
         ctx.moveTo(0, 390);
         ctx.lineTo(canvas.width, 390);
         ctx.stroke();
 
+        // 본체
         ctx.fillStyle = p1.color;
         ctx.fillRect(p1.x, p1.y, p1.w, p1.h);
         ctx.fillStyle = p2.color;
         ctx.fillRect(p2.x, p2.y, p2.w, p2.h);
 
+        // 공격 범위 이펙트
         if (p1.attackBox) {
-            ctx.fillStyle = "rgba(255,0,0,0.5)";
+            ctx.fillStyle = "rgba(231, 76, 60, 0.5)";
             ctx.fillRect(p1.attackBox.x, p1.attackBox.y, p1.attackBox.w, p1.attackBox.h);
         }
         if (p2.attackBox) {
-            ctx.fillStyle = "rgba(0,255,255,0.5)";
+            ctx.fillStyle = "rgba(52, 152, 219, 0.5)";
             ctx.fillRect(p2.attackBox.x, p2.attackBox.y, p2.attackBox.w, p2.attackBox.h);
         }
 
+        // UI 체력바 & 궁극기 게이지
         ctx.fillStyle = "#444"; ctx.fillRect(30, 20, 300, 20);
-        ctx.fillStyle = "red"; ctx.fillRect(30, 20, (p1.hp / p1.maxHp) * 300, 20);
-        ctx.fillStyle = "yellow"; ctx.fillRect(30, 45, (p1.ultGauge / 100) * 300, 8);
+        ctx.fillStyle = "#e74c3c"; ctx.fillRect(30, 20, (p1.hp / p1.maxHp) * 300, 20);
+        ctx.fillStyle = "#f1c40f"; ctx.fillRect(30, 45, (p1.ultGauge / 100) * 300, 8);
 
         ctx.fillStyle = "#444"; ctx.fillRect(570, 20, 300, 20);
-        ctx.fillStyle = "cyan"; ctx.fillRect(570, 20, (p2.hp / p
+        ctx.fillStyle = "#3498db"; ctx.fillRect(570, 20, (p2.hp / p2.maxHp) * 300, 20);
+        ctx.fillStyle = "#f1c40f"; ctx.fillRect(570, 45, (p2.ultGauge / 100) * 300, 8);
+
+        ctx.fillStyle = "#FFF"; ctx.font = "bold 14px sans-serif";
+        ctx.fillText("1P: " + p1.name, 30, 15);
+        ctx.fillText("2P: " + p2.name, 570, 15);
+
+        if (p1.hp <= 0 || p2.hp <= 0) state = "END";
+    } else if (state === "END") {
+        ctx.fillStyle = "#f1c40f";
+        ctx.font = "bold 40px sans-serif";
+        const winTxt = p1.hp > 0 ? "1P 승리!" : "2P 승리!";
+        ctx.fillText(winTxt, 380, 220);
+    }
+
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
