@@ -5,7 +5,7 @@ st.set_page_config(
     page_title="2P 레트로 격투 - GOD 배준서", page_icon="🥊", layout="wide"
 )
 
-st.title("🥊 2P 격투 게임 (ZXKAI, slxughter - NO BATIDAO BGM)")
+st.title("🥊 2P 격투 게임 (NO BATIDAO BGM + Phonk 보컬 & 배준서 숭배 대사)")
 
 GAME_ENGINE = """
 <!DOCTYPE html>
@@ -20,7 +20,7 @@ GAME_ENGINE = """
 </style>
 </head>
 <body>
-    <div class="notice">🔊 게임 화면을 마우스로 '클릭'하면 NO BATIDAO 비트가 시작됩니다!</div>
+    <div class="notice">🔊 화면을 클릭하면 NO BATIDAO 비트와 폰크 보컬 샘플이 시작됩니다!</div>
     <div class="info">
         <b>[1P 조작]</b> 이동: A, D | 점프: W | 공격: F | 궁극기: G <br>
         <b>[2P 조작]</b> 이동: ←, → | 점프: ↑ | 공격: K | 궁극기: L <br>
@@ -36,6 +36,49 @@ GAME_ENGINE = """
     var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     var bgmInterval = null;
 
+    // 🔊 배준서 숭배 대사 모음
+    var GOD_PRAISES_SELECT = [
+        "시공을 초월한 절대신, 배준서 님께서 강림하셨다.",
+        "모두 무릎을 꿇어라. 파멸의 절대존엄 배준서 님이다.",
+        "온 우주가 배준서 님의 위엄 앞에 진동한다.",
+        "전설의 신, 배준서 님을 감히 마주할 준비가 되었는가."
+    ];
+
+    var GOD_PRAISES_ATTACK = [
+        "신벌이다!",
+        "어디 감히!",
+        "무릎 꿇어라!",
+        "배준서 님의 일격!"
+    ];
+
+    var GOD_PRAISES_ULT = [
+        "절대신 배준서 님의 창세의 권능!",
+        "우주 파괴의 신벌을 받아라!",
+        "배준서 님 앞에 모든 만물은 소멸한다!"
+    ];
+
+    var GOD_PRAISES_WIN = [
+        "당연한 결과다. 배준서 님께 영원한 영광을!",
+        "승자는 오직 절대존엄 배준서 님뿐이다!",
+        "배준서 님의 위대함 앞에 패배자만 남았도다."
+    ];
+
+    function getRandomItem(arr) {
+        return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    // Voice Synthesis System
+    function speakText(text, pitch, rate) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            var msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'ko-KR';
+            msg.pitch = pitch || 0.2;
+            msg.rate = rate || 0.8;
+            window.speechSynthesis.speak(msg);
+        }
+    }
+
     function stopBGM() {
         if (bgmInterval) {
             clearInterval(bgmInterval);
@@ -43,19 +86,19 @@ GAME_ENGINE = """
         }
     }
 
-    // 🔊 ZXKAI, slxughter - NO BATIDAO (Brazilian Phonk Sound Engine)
+    // 🔊 NO BATIDAO BGM + Phonk Vocal Chants
     function startNoBatidaoBGM() {
         stopBGM();
         if (audioCtx.state === 'suspended') audioCtx.resume();
 
         var step = 0;
-        // Phonk Bassline 노트 (C Minor 계열)
         var bassFreqs = [65.41, 65.41, 77.78, 65.41, 87.31, 65.41, 98.00, 77.78];
+        var vocalChants = ["BATIDAO", "PHONK", "BAILE", "GOD", "JUNSEO"];
 
         bgmInterval = setInterval(function() {
             var now = audioCtx.currentTime;
 
-            // 1. Heavy Phonk 808 Sub Kick (Step 0, 4, 8, 12)
+            // 1. Heavy Phonk 808 Sub Kick
             if (step % 4 === 0) {
                 var kickOsc = audioCtx.createOscillator();
                 var kickGain = audioCtx.createGain();
@@ -65,7 +108,7 @@ GAME_ENGINE = """
                 kickOsc.frequency.setValueAtTime(freq * 1.5, now);
                 kickOsc.frequency.exponentialRampToValueAtTime(35, now + 0.2);
 
-                kickGain.gain.setValueAtTime(0.6, now);
+                kickGain.gain.setValueAtTime(0.65, now);
                 kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
 
                 kickOsc.connect(kickGain);
@@ -74,15 +117,15 @@ GAME_ENGINE = """
                 kickOsc.stop(now + 0.2);
             }
 
-            // 2. Batidao Tamborzão Syncopated Percussion Hits
+            // 2. Batidao Tamborzão Syncopated Percussion
             if (step % 16 === 3 || step % 16 === 6 || step % 16 === 10 || step % 16 === 12 || step % 16 === 14) {
                 var percOsc = audioCtx.createOscillator();
                 var percGain = audioCtx.createGain();
                 percOsc.type = 'square';
-                percOsc.frequency.setValueAtTime(240, now);
+                percOsc.frequency.setValueAtTime(250, now);
                 percOsc.frequency.exponentialRampToValueAtTime(60, now + 0.08);
 
-                percGain.gain.setValueAtTime(0.3, now);
+                percGain.gain.setValueAtTime(0.35, now);
                 percGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
                 percOsc.connect(percGain);
@@ -91,7 +134,7 @@ GAME_ENGINE = """
                 percOsc.stop(now + 0.08);
             }
 
-            // 3. Phonk Cowbell / Synth Lead Shot
+            // 3. Phonk Cowbell / Synth Lead
             if (step % 8 === 2 || step % 8 === 6) {
                 var cbOsc1 = audioCtx.createOscillator();
                 var cbOsc2 = audioCtx.createOscillator();
@@ -100,10 +143,10 @@ GAME_ENGINE = """
                 cbOsc1.type = 'square';
                 cbOsc2.type = 'square';
 
-                cbOsc1.frequency.setValueAtTime(587.33, now); // D5
-                cbOsc2.frequency.setValueAtTime(880.00, now); // A5
+                cbOsc1.frequency.setValueAtTime(587.33, now);
+                cbOsc2.frequency.setValueAtTime(880.00, now);
 
-                cbGain.gain.setValueAtTime(0.15, now);
+                cbGain.gain.setValueAtTime(0.18, now);
                 cbGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
                 cbOsc1.connect(cbGain);
@@ -116,25 +159,14 @@ GAME_ENGINE = """
                 cbOsc2.stop(now + 0.12);
             }
 
-            step = (step + 1) % 16;
-        }, 110); // ~136 BPM (NO BATIDAO Standard Tempo)
-    }
+            // 4. Phonk Low-Pitch Vocal Loop Sample
+            if (step % 16 === 0) {
+                var chant = getRandomItem(vocalChants);
+                speakText(chant, 0.1, 1.4);
+            }
 
-    function playDivineChime() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        var freqs = [130.81, 164.81, 196.00, 261.63, 329.63, 392.00];
-        freqs.forEach(function(f) {
-            var osc = audioCtx.createOscillator();
-            var gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = f;
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 3.0);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 3.0);
-        });
+            step = (step + 1) % 16;
+        }, 110);
     }
 
     function playSound(type, pitchMultiplier) {
@@ -174,19 +206,6 @@ GAME_ENGINE = """
         }
     }
 
-    function speakPraise(text) {
-        playDivineChime();
-        startNoBatidaoBGM();
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            var msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'ko-KR';
-            msg.pitch = 0.1;
-            msg.rate = 0.7;
-            window.speechSynthesis.speak(msg);
-        }
-    }
-
     var CHARACTERS = [
         { name: "⚡배준서 (GOD)⚡", color: "#A855F7", beltColor: "#FFD700", hp: 1000, speed: 15, atk: 100, ult: 500, soundPitch: 0.5, isGod: true },
         { name: "카즈야", color: "#DC2626", beltColor: "#000", hp: 100, speed: 5, atk: 10, ult: 30, soundPitch: 0.8 },
@@ -209,6 +228,7 @@ GAME_ENGINE = """
     window.addEventListener("click", function() { 
         canvas.focus();
         if (audioCtx.state === 'suspended') audioCtx.resume();
+        startNoBatidaoBGM();
     });
 
     window.addEventListener("keydown", function(e) {
@@ -222,7 +242,7 @@ GAME_ENGINE = """
                 if (e.key === 'f' || e.key === 'F' || e.code === 'KeyF') {
                     p1Ready = true;
                     if (CHARACTERS[p1Sel].isGod) {
-                        speakPraise("시공을 초월한 절대신, 배준서 님께서 강림하셨다.");
+                        speakText(getRandomItem(GOD_PRAISES_SELECT), 0.1, 0.75);
                     }
                 }
             }
@@ -232,7 +252,7 @@ GAME_ENGINE = """
                 if (e.key === 'k' || e.key === 'K' || e.code === 'KeyK') {
                     p2Ready = true;
                     if (CHARACTERS[p2Sel].isGod) {
-                        speakPraise("모두 무릎을 꿇어라. 파멸의 절대존엄 배준서 님이다.");
+                        speakText(getRandomItem(GOD_PRAISES_SELECT), 0.1, 0.75);
                     }
                 }
             }
@@ -250,10 +270,10 @@ GAME_ENGINE = """
     });
 
     function resetToSelect() {
-        stopBGM();
         p1Ready = false;
         p2Ready = false;
         gameState = "SELECT";
+        startNoBatidaoBGM();
     }
 
     function startGame() {
@@ -320,12 +340,17 @@ GAME_ENGINE = """
             enemy.hp = Math.max(0, enemy.hp - damage);
             if (!isUlt) p.ultGauge = Math.min(100, p.ultGauge + 50);
 
-            if (isUlt) {
-                playSound('ult', p.soundPitch);
-            } else if (p.isGod) {
-                playSound('godHit', 1.0);
+            if (p.isGod) {
+                if (isUlt) {
+                    playSound('ult', p.soundPitch);
+                    speakText(getRandomItem(GOD_PRAISES_ULT), 0.1, 0.85);
+                } else {
+                    playSound('godHit', 1.0);
+                    speakText(getRandomItem(GOD_PRAISES_ATTACK), 0.1, 1.1);
+                }
             } else {
-                playSound('hit', enemy.soundPitch);
+                if (isUlt) playSound('ult', p.soundPitch);
+                else playSound('hit', enemy.soundPitch);
             }
         }
 
@@ -475,7 +500,13 @@ GAME_ENGINE = """
             ctx.fillText("1P: " + p1.name, 30, 15);
             ctx.fillText("2P: " + p2.name, 600, 15);
 
-            if (p1.hp <= 0 || p2.hp <= 0) gameState = "END";
+            if (p1.hp <= 0 || p2.hp <= 0) {
+                gameState = "END";
+                var winner = p1.hp > 0 ? p1 : p2;
+                if (winner.isGod) {
+                    speakText(getRandomItem(GOD_PRAISES_WIN), 0.1, 0.7);
+                }
+            }
         } else if (gameState === "END") {
             ctx.fillStyle = "#FFD700";
             ctx.font = "bold 42px sans-serif";
