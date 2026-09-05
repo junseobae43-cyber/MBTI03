@@ -5,7 +5,7 @@ st.set_page_config(
     page_title="2P 레트로 격투 - GOD 배준서", page_icon="🥊", layout="wide"
 )
 
-st.title("🥊 2P 격투 게임 (NO BATIDAO Extended 원곡 재생)")
+st.title("🥊 2P 격투 게임 (배준서 전용 BGM & 극대화 Voice)")
 
 GAME_ENGINE = """
 <!DOCTYPE html>
@@ -15,20 +15,19 @@ GAME_ENGINE = """
 <style>
     body { background-color: #0b0b10; color: white; text-align: center; font-family: sans-serif; margin: 0; padding: 0; user-select: none; }
     canvas { background: #13111c; border: 4px solid #3b82f6; display: block; margin: 10px auto; outline: none; box-shadow: 0 0 25px rgba(59,130,246,0.6); }
-    .notice { color: #60a5fa; font-weight: bold; margin: 10px 0 5px 0; font-size: 16px; text-shadow: 0 0 8px #3b82f6; }
+    .notice { color: #A855F7; font-weight: bold; margin: 10px 0 5px 0; font-size: 16px; text-shadow: 0 0 8px #a855f7; }
     .info { font-size: 13px; color: #ccc; background: #1e1b2e; padding: 8px; display: inline-block; border-radius: 5px; border: 1px solid #3b82f6; }
     #yt-player { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 </style>
 </head>
 <body>
-    <div class="notice">🔊 화면을 마우스로 클릭하면 유튜브 NO BATIDAO (Extended) 원곡 BGM이 재생됩니다!</div>
+    <div class="notice">⚡ 배준서(GOD) 선택 시 NO BATIDÃO Extended BGM 발동 & 대형 보이스 출력! ⚡</div>
     <div class="info">
         <b>[1P 조작]</b> 이동: A, D | 점프: W | 공격: F | 궁극기: G <br>
         <b>[2P 조작]</b> 이동: ←, → | 점프: ↑ | 공격: K | 궁극기: L <br>
         <span style="color: #60a5fa;"><b>[게임 종료 후]</b> <b>R</b> 키를 누르면 재시작!</span>
     </div>
     
-    <!-- 유튜브 원곡 NO BATIDAO (Extended) 플레이어 -->
     <iframe id="yt-player" src="https://www.youtube.com/embed/YXxdETZ9npU?enablejsapi=1&autoplay=0&loop=1&playlist=YXxdETZ9npU" allow="autoplay"></iframe>
 
     <canvas id="gameCanvas" width="950" height="480" tabindex="0"></canvas>
@@ -41,7 +40,6 @@ GAME_ENGINE = """
     var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     var ytPlayer = document.getElementById("yt-player");
 
-    // 🔊 특정 요청 대사
     var GOD_PRAISE_EXACT = "전지전능하신 천지신 세계의 왕 배준서님이 강림하셨다";
 
     var GOD_PRAISES_ATTACK = [
@@ -67,21 +65,29 @@ GAME_ENGINE = """
         return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    // Voice Synthesis System
+    // 🔊 음성 출력 기능 (볼륨 최대로 증폭)
     function speakText(text, pitch, rate) {
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
             var msg = new SpeechSynthesisUtterance(text);
             msg.lang = 'ko-KR';
-            msg.pitch = pitch || 0.2;
+            msg.pitch = pitch || 0.1;
             msg.rate = rate || 0.8;
+            msg.volume = 1.0; // 최대 볼륨 설정
             window.speechSynthesis.speak(msg);
         }
     }
 
+    // 🎵 배준서 선택시에만 BGM 재생
     function playBGM() {
         if (ytPlayer && ytPlayer.contentWindow) {
             ytPlayer.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+        }
+    }
+
+    function stopBGM() {
+        if (ytPlayer && ytPlayer.contentWindow) {
+            ytPlayer.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
         }
     }
 
@@ -107,7 +113,7 @@ GAME_ENGINE = """
             osc.type = 'square';
             osc.frequency.setValueAtTime(220, now);
             osc.frequency.exponentialRampToValueAtTime(15, now + 0.35);
-            gain.gain.setValueAtTime(0.8, now);
+            gain.gain.setValueAtTime(1.0, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
             osc.start(now);
             osc.stop(now + 0.35);
@@ -115,7 +121,7 @@ GAME_ENGINE = """
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(90 * pitch, now);
             osc.frequency.linearRampToValueAtTime(650 * pitch, now + 0.4);
-            gain.gain.setValueAtTime(0.6, now);
+            gain.gain.setValueAtTime(0.8, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
             osc.start(now);
             osc.stop(now + 0.4);
@@ -144,7 +150,6 @@ GAME_ENGINE = """
     window.addEventListener("click", function() { 
         canvas.focus();
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        playBGM();
     });
 
     window.addEventListener("keydown", function(e) {
@@ -158,6 +163,7 @@ GAME_ENGINE = """
                 if (e.key === 'f' || e.key === 'F' || e.code === 'KeyF') {
                     p1Ready = true;
                     if (CHARACTERS[p1Sel].isGod) {
+                        playBGM(); // 배준서 선택 시 노래 시작
                         speakText(GOD_PRAISE_EXACT, 0.1, 0.75);
                     }
                 }
@@ -168,6 +174,7 @@ GAME_ENGINE = """
                 if (e.key === 'k' || e.key === 'K' || e.code === 'KeyK') {
                     p2Ready = true;
                     if (CHARACTERS[p2Sel].isGod) {
+                        playBGM(); // 배준서 선택 시 노래 시작
                         speakText(GOD_PRAISE_EXACT, 0.1, 0.75);
                     }
                 }
@@ -189,7 +196,7 @@ GAME_ENGINE = """
         p1Ready = false;
         p2Ready = false;
         gameState = "SELECT";
-        playBGM();
+        stopBGM();
     }
 
     function startGame() {
@@ -259,10 +266,10 @@ GAME_ENGINE = """
             if (p.isGod) {
                 if (isUlt) {
                     playSound('ult', p.soundPitch);
-                    speakText(getRandomItem(GOD_PRAISES_ULT), 0.1, 0.85);
+                    speakText(getRandomItem(GOD_PRAISES_ULT), 0.1, 0.8);
                 } else {
                     playSound('godHit', 1.0);
-                    speakText(getRandomItem(GOD_PRAISES_ATTACK), 0.1, 1.1);
+                    speakText(getRandomItem(GOD_PRAISES_ATTACK), 0.1, 1.0);
                 }
             } else {
                 if (isUlt) playSound('ult', p.soundPitch);
