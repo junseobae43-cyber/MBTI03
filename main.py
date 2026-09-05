@@ -5,7 +5,7 @@ st.set_page_config(
     page_title="2P 레트로 격투 - GOD 배준서", page_icon="🥊", layout="wide"
 )
 
-st.title("🥊 2P 격투 게임 (No Batidão 펑크 비트 & 무한 재경기)")
+st.title("🥊 2P 격투 게임 (ZXKAI, slxughter - NO BATIDAO BGM)")
 
 GAME_ENGINE = """
 <!DOCTYPE html>
@@ -13,18 +13,18 @@ GAME_ENGINE = """
 <head>
 <meta charset="utf-8">
 <style>
-    body { background-color: #0d0d11; color: white; text-align: center; font-family: sans-serif; margin: 0; padding: 0; user-select: none; }
-    canvas { background: #181824; border: 4px solid #4a4a6a; display: block; margin: 10px auto; outline: none; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
-    .notice { color: #ffeb3b; font-weight: bold; margin: 10px 0 5px 0; font-size: 16px; }
-    .info { font-size: 13px; color: #ccc; background: #222233; padding: 8px; display: inline-block; border-radius: 5px; border: 1px solid #444; }
+    body { background-color: #0b0b10; color: white; text-align: center; font-family: sans-serif; margin: 0; padding: 0; user-select: none; }
+    canvas { background: #13111c; border: 4px solid #3b82f6; display: block; margin: 10px auto; outline: none; box-shadow: 0 0 25px rgba(59,130,246,0.6); }
+    .notice { color: #60a5fa; font-weight: bold; margin: 10px 0 5px 0; font-size: 16px; text-shadow: 0 0 8px #3b82f6; }
+    .info { font-size: 13px; color: #ccc; background: #1e1b2e; padding: 8px; display: inline-block; border-radius: 5px; border: 1px solid #3b82f6; }
 </style>
 </head>
 <body>
-    <div class="notice">⚠️ 게임 화면을 마우스로 '클릭'해야 No Batidão 비트가 시작됩니다!</div>
+    <div class="notice">🔊 게임 화면을 마우스로 '클릭'하면 NO BATIDAO 비트가 시작됩니다!</div>
     <div class="info">
         <b>[1P 조작]</b> 이동: A, D | 점프: W | 공격: F | 궁극기: G <br>
         <b>[2P 조작]</b> 이동: ←, → | 점프: ↑ | 공격: K | 궁극기: L <br>
-        <span style="color: #ffeb3b;"><b>[게임 종료 후]</b> <b>R</b> 키를 누르면 다음 한 판 재시작!</span>
+        <span style="color: #60a5fa;"><b>[게임 종료 후]</b> <b>R</b> 키를 누르면 다음 한 판 재시작!</span>
     </div>
     <canvas id="gameCanvas" width="950" height="480" tabindex="0"></canvas>
 
@@ -43,66 +43,81 @@ GAME_ENGINE = """
         }
     }
 
-    // 🔥 브라질 바이올리 펑크 'NO BATIDÃO' 리듬 엔진
-    function startBatidaoBGM() {
+    // 🔊 ZXKAI, slxughter - NO BATIDAO (Brazilian Phonk Sound Engine)
+    function startNoBatidaoBGM() {
         stopBGM();
         if (audioCtx.state === 'suspended') audioCtx.resume();
 
-        // 130 BPM Batidão 리듬 패턴 (총 16스텝)
         var step = 0;
+        // Phonk Bassline 노트 (C Minor 계열)
+        var bassFreqs = [65.41, 65.41, 77.78, 65.41, 87.31, 65.41, 98.00, 77.78];
 
         bgmInterval = setInterval(function() {
             var now = audioCtx.currentTime;
 
-            // 1. 묵직한 서브 베이스 (Kick & Sub Bass) - 1, 5, 9, 13 스텝
+            // 1. Heavy Phonk 808 Sub Kick (Step 0, 4, 8, 12)
             if (step % 4 === 0) {
                 var kickOsc = audioCtx.createOscillator();
                 var kickGain = audioCtx.createGain();
-                kickOsc.type = 'triangle';
-                kickOsc.frequency.setValueAtTime(150, now);
-                kickOsc.frequency.exponentialRampToValueAtTime(35, now + 0.18);
-                kickGain.gain.setValueAtTime(0.7, now);
-                kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+                kickOsc.type = 'sawtooth';
+                
+                var freq = bassFreqs[(step / 4) % bassFreqs.length];
+                kickOsc.frequency.setValueAtTime(freq * 1.5, now);
+                kickOsc.frequency.exponentialRampToValueAtTime(35, now + 0.2);
+
+                kickGain.gain.setValueAtTime(0.6, now);
+                kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
                 kickOsc.connect(kickGain);
                 kickGain.connect(audioCtx.destination);
                 kickOsc.start(now);
-                kickOsc.stop(now + 0.18);
+                kickOsc.stop(now + 0.2);
             }
 
-            // 2. Batidão 특유의 싱코페이션 스네어 (Volt Mix / Tamborzão)
+            // 2. Batidao Tamborzão Syncopated Percussion Hits
             if (step % 16 === 3 || step % 16 === 6 || step % 16 === 10 || step % 16 === 12 || step % 16 === 14) {
-                var snareOsc = audioCtx.createOscillator();
-                var snareGain = audioCtx.createGain();
-                snareOsc.type = 'sawtooth';
-                snareOsc.frequency.setValueAtTime(220, now);
-                snareOsc.frequency.exponentialRampToValueAtTime(80, now + 0.1);
-                snareGain.gain.setValueAtTime(0.35, now);
-                snareGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-                snareOsc.connect(snareGain);
-                snareGain.connect(audioCtx.destination);
-                snareOsc.start(now);
-                snareOsc.stop(now + 0.1);
+                var percOsc = audioCtx.createOscillator();
+                var percGain = audioCtx.createGain();
+                percOsc.type = 'square';
+                percOsc.frequency.setValueAtTime(240, now);
+                percOsc.frequency.exponentialRampToValueAtTime(60, now + 0.08);
+
+                percGain.gain.setValueAtTime(0.3, now);
+                percGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+                percOsc.connect(percGain);
+                percGain.connect(audioCtx.destination);
+                percOsc.start(now);
+                percOsc.stop(now + 0.08);
             }
 
-            // 3. 펑크 클랩 (High Clap/Snare)
-            if (step % 4 === 2) {
-                var noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.08, audioCtx.sampleRate);
-                var output = noiseBuffer.getChannelData(0);
-                for (var i = 0; i < noiseBuffer.length; i++) {
-                    output[i] = Math.random() * 2 - 1;
-                }
-                var noise = audioCtx.createBufferSource();
-                noise.buffer = noiseBuffer;
-                var clapGain = audioCtx.createGain();
-                clapGain.gain.setValueAtTime(0.25, now);
-                clapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-                noise.connect(clapGain);
-                clapGain.connect(audioCtx.destination);
-                noise.start(now);
+            // 3. Phonk Cowbell / Synth Lead Shot
+            if (step % 8 === 2 || step % 8 === 6) {
+                var cbOsc1 = audioCtx.createOscillator();
+                var cbOsc2 = audioCtx.createOscillator();
+                var cbGain = audioCtx.createGain();
+
+                cbOsc1.type = 'square';
+                cbOsc2.type = 'square';
+
+                cbOsc1.frequency.setValueAtTime(587.33, now); // D5
+                cbOsc2.frequency.setValueAtTime(880.00, now); // A5
+
+                cbGain.gain.setValueAtTime(0.15, now);
+                cbGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+                cbOsc1.connect(cbGain);
+                cbOsc2.connect(cbGain);
+                cbGain.connect(audioCtx.destination);
+
+                cbOsc1.start(now);
+                cbOsc2.start(now);
+                cbOsc1.stop(now + 0.12);
+                cbOsc2.stop(now + 0.12);
             }
 
             step = (step + 1) % 16;
-        }, 115); // 약 130 BPM
+        }, 110); // ~136 BPM (NO BATIDAO Standard Tempo)
     }
 
     function playDivineChime() {
@@ -142,8 +157,8 @@ GAME_ENGINE = """
             osc.stop(now + 0.12);
         } else if (type === 'godHit') {
             osc.type = 'square';
-            osc.frequency.setValueAtTime(200, now);
-            osc.frequency.exponentialRampToValueAtTime(20, now + 0.35);
+            osc.frequency.setValueAtTime(220, now);
+            osc.frequency.exponentialRampToValueAtTime(15, now + 0.35);
             gain.gain.setValueAtTime(0.8, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
             osc.start(now);
@@ -151,7 +166,7 @@ GAME_ENGINE = """
         } else if (type === 'ult') {
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(90 * pitch, now);
-            osc.frequency.linearRampToValueAtTime(600 * pitch, now + 0.4);
+            osc.frequency.linearRampToValueAtTime(650 * pitch, now + 0.4);
             gain.gain.setValueAtTime(0.6, now);
             gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
             osc.start(now);
@@ -161,7 +176,7 @@ GAME_ENGINE = """
 
     function speakPraise(text) {
         playDivineChime();
-        startBatidaoBGM();
+        startNoBatidaoBGM();
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
             var msg = new SpeechSynthesisUtterance(text);
@@ -326,7 +341,7 @@ GAME_ENGINE = """
         var f = p.facing;
 
         if (p.isGod) {
-            ctx.fillStyle = "rgba(168, 85, 247, 0.25)";
+            ctx.fillStyle = "rgba(168, 85, 247, 0.35)";
             ctx.beginPath();
             ctx.arc(x + 25, y + 55, 65, 0, Math.PI * 2);
             ctx.fill();
@@ -375,7 +390,7 @@ GAME_ENGINE = """
 
     function drawSelectScreen() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#FFF";
+        ctx.fillStyle = "#60A5FA";
         ctx.font = "bold 22px sans-serif";
         ctx.fillText("SELECT YOUR FIGHTER", 340, 45);
 
@@ -402,17 +417,17 @@ GAME_ENGINE = """
             ctx.fillText("필살기: " + c.ult, x + 10, y + 135);
 
             if (p1Sel === i) {
-                ctx.strokeStyle = "#FF3333";
+                ctx.strokeStyle = "#FF3366";
                 ctx.lineWidth = 4;
                 ctx.strokeRect(x - 2, y - 2, 159, 164);
-                ctx.fillStyle = "#FF3333";
+                ctx.fillStyle = "#FF3366";
                 ctx.fillText(p1Ready ? "1P (READY)" : "1P", x + 10, y - 8);
             }
             if (p2Sel === i) {
-                ctx.strokeStyle = "#00FFFF";
+                ctx.strokeStyle = "#3B82F6";
                 ctx.lineWidth = 4;
                 ctx.strokeRect(x - 4, y - 4, 163, 168);
-                ctx.fillStyle = "#00FFFF";
+                ctx.fillStyle = "#3B82F6";
                 ctx.fillText(p2Ready ? "2P (READY)" : "2P", x + 85, y - 8);
             }
         });
@@ -427,9 +442,9 @@ GAME_ENGINE = """
             updatePlayer(p1, p2, 'a', 'KeyA', 'd', 'KeyD', 'w', 'KeyW', 'f', 'KeyF', 'g', 'KeyG');
             updatePlayer(p2, p1, 'ArrowLeft', 'ArrowLeft', 'ArrowRight', 'ArrowRight', 'ArrowUp', 'ArrowUp', 'k', 'KeyK', 'l', 'KeyL');
 
-            ctx.fillStyle = "#2a2a3d";
+            ctx.fillStyle = "#1e1b2e";
             ctx.fillRect(0, 400, canvas.width, 80);
-            ctx.strokeStyle = "#A855F7";
+            ctx.strokeStyle = "#3b82f6";
             ctx.lineWidth = 3;
             ctx.beginPath();
             ctx.moveTo(0, 400);
@@ -440,20 +455,20 @@ GAME_ENGINE = """
             drawPixelFighter(p2);
 
             if (p1.attackBox) {
-                ctx.fillStyle = "rgba(255, 51, 51, 0.4)";
+                ctx.fillStyle = "rgba(255, 51, 102, 0.4)";
                 ctx.fillRect(p1.attackBox.x, p1.attackBox.y, p1.attackBox.w, p1.attackBox.h);
             }
             if (p2.attackBox) {
-                ctx.fillStyle = "rgba(0, 255, 255, 0.4)";
+                ctx.fillStyle = "rgba(59, 130, 246, 0.4)";
                 ctx.fillRect(p2.attackBox.x, p2.attackBox.y, p2.attackBox.w, p2.attackBox.h);
             }
 
             ctx.fillStyle = "#222"; ctx.fillRect(30, 20, 320, 22);
-            ctx.fillStyle = "#FF3333"; ctx.fillRect(30, 20, (p1.hp / p1.maxHp) * 320, 22);
+            ctx.fillStyle = "#FF3366"; ctx.fillRect(30, 20, (p1.hp / p1.maxHp) * 320, 22);
             ctx.fillStyle = "#FFD700"; ctx.fillRect(30, 45, (p1.ultGauge / 100) * 320, 6);
 
             ctx.fillStyle = "#222"; ctx.fillRect(600, 20, 320, 22);
-            ctx.fillStyle = "#00FFFF"; ctx.fillRect(600, 20, (p2.hp / p2.maxHp) * 320, 22);
+            ctx.fillStyle = "#3B82F6"; ctx.fillRect(600, 20, (p2.hp / p2.maxHp) * 320, 22);
             ctx.fillStyle = "#FFD700"; ctx.fillRect(600, 45, (p2.ultGauge / 100) * 320, 6);
 
             ctx.fillStyle = "#FFF"; ctx.font = "bold 15px sans-serif";
@@ -467,7 +482,7 @@ GAME_ENGINE = """
             var winTxt = p1.hp > 0 ? "1P K.O. 승리!" : "2P K.O. 승리!";
             ctx.fillText(winTxt, 350, 210);
 
-            ctx.fillStyle = "#FFF";
+            ctx.fillStyle = "#60A5FA";
             ctx.font = "bold 20px sans-serif";
             ctx.fillText("Press 'R' Key to Play Again!", 330, 270);
         }
