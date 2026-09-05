@@ -5,7 +5,7 @@ st.set_page_config(
     page_title="2P 레트로 격투 - GOD 배준서", page_icon="🥊", layout="wide"
 )
 
-st.title("🥊 2P 격투 게임 (NO BATIDAO BGM + Phonk 보컬 & 배준서 숭배 대사)")
+st.title("🥊 2P 격투 게임 (NO BATIDAO Extended 원곡 재생)")
 
 GAME_ENGINE = """
 <!DOCTYPE html>
@@ -17,15 +17,20 @@ GAME_ENGINE = """
     canvas { background: #13111c; border: 4px solid #3b82f6; display: block; margin: 10px auto; outline: none; box-shadow: 0 0 25px rgba(59,130,246,0.6); }
     .notice { color: #60a5fa; font-weight: bold; margin: 10px 0 5px 0; font-size: 16px; text-shadow: 0 0 8px #3b82f6; }
     .info { font-size: 13px; color: #ccc; background: #1e1b2e; padding: 8px; display: inline-block; border-radius: 5px; border: 1px solid #3b82f6; }
+    #yt-player { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 </style>
 </head>
 <body>
-    <div class="notice">🔊 화면을 클릭하면 NO BATIDAO 비트와 폰크 보컬 샘플이 시작됩니다!</div>
+    <div class="notice">🔊 화면을 마우스로 클릭하면 유튜브 NO BATIDAO (Extended) 원곡 BGM이 재생됩니다!</div>
     <div class="info">
         <b>[1P 조작]</b> 이동: A, D | 점프: W | 공격: F | 궁극기: G <br>
         <b>[2P 조작]</b> 이동: ←, → | 점프: ↑ | 공격: K | 궁극기: L <br>
-        <span style="color: #60a5fa;"><b>[게임 종료 후]</b> <b>R</b> 키를 누르면 다음 한 판 재시작!</span>
+        <span style="color: #60a5fa;"><b>[게임 종료 후]</b> <b>R</b> 키를 누르면 재시작!</span>
     </div>
+    
+    <!-- 유튜브 원곡 NO BATIDAO (Extended) 플레이어 -->
+    <iframe id="yt-player" src="https://www.youtube.com/embed/YXxdETZ9npU?enablejsapi=1&autoplay=0&loop=1&playlist=YXxdETZ9npU" allow="autoplay"></iframe>
+
     <canvas id="gameCanvas" width="950" height="480" tabindex="0"></canvas>
 
 <script>
@@ -34,15 +39,10 @@ GAME_ENGINE = """
     var ctx = canvas.getContext("2d");
 
     var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    var bgmInterval = null;
+    var ytPlayer = document.getElementById("yt-player");
 
-    // 🔊 배준서 숭배 대사 모음
-    var GOD_PRAISES_SELECT = [
-        "시공을 초월한 절대신, 배준서 님께서 강림하셨다.",
-        "모두 무릎을 꿇어라. 파멸의 절대존엄 배준서 님이다.",
-        "온 우주가 배준서 님의 위엄 앞에 진동한다.",
-        "전설의 신, 배준서 님을 감히 마주할 준비가 되었는가."
-    ];
+    // 🔊 특정 요청 대사
+    var GOD_PRAISE_EXACT = "전지전능하신 천지신 세계의 왕 배준서님이 강림하셨다";
 
     var GOD_PRAISES_ATTACK = [
         "신벌이다!",
@@ -52,13 +52,13 @@ GAME_ENGINE = """
     ];
 
     var GOD_PRAISES_ULT = [
-        "절대신 배준서 님의 창세의 권능!",
+        "전지전능한 창세의 권능!",
         "우주 파괴의 신벌을 받아라!",
         "배준서 님 앞에 모든 만물은 소멸한다!"
     ];
 
     var GOD_PRAISES_WIN = [
-        "당연한 결과다. 배준서 님께 영원한 영광을!",
+        "전지전능하신 세계의 왕 배준서 님의 당연한 승리다!",
         "승자는 오직 절대존엄 배준서 님뿐이다!",
         "배준서 님의 위대함 앞에 패배자만 남았도다."
     ];
@@ -79,94 +79,10 @@ GAME_ENGINE = """
         }
     }
 
-    function stopBGM() {
-        if (bgmInterval) {
-            clearInterval(bgmInterval);
-            bgmInterval = null;
+    function playBGM() {
+        if (ytPlayer && ytPlayer.contentWindow) {
+            ytPlayer.contentWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
         }
-    }
-
-    // 🔊 NO BATIDAO BGM + Phonk Vocal Chants
-    function startNoBatidaoBGM() {
-        stopBGM();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-
-        var step = 0;
-        var bassFreqs = [65.41, 65.41, 77.78, 65.41, 87.31, 65.41, 98.00, 77.78];
-        var vocalChants = ["BATIDAO", "PHONK", "BAILE", "GOD", "JUNSEO"];
-
-        bgmInterval = setInterval(function() {
-            var now = audioCtx.currentTime;
-
-            // 1. Heavy Phonk 808 Sub Kick
-            if (step % 4 === 0) {
-                var kickOsc = audioCtx.createOscillator();
-                var kickGain = audioCtx.createGain();
-                kickOsc.type = 'sawtooth';
-                
-                var freq = bassFreqs[(step / 4) % bassFreqs.length];
-                kickOsc.frequency.setValueAtTime(freq * 1.5, now);
-                kickOsc.frequency.exponentialRampToValueAtTime(35, now + 0.2);
-
-                kickGain.gain.setValueAtTime(0.65, now);
-                kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-
-                kickOsc.connect(kickGain);
-                kickGain.connect(audioCtx.destination);
-                kickOsc.start(now);
-                kickOsc.stop(now + 0.2);
-            }
-
-            // 2. Batidao Tamborzão Syncopated Percussion
-            if (step % 16 === 3 || step % 16 === 6 || step % 16 === 10 || step % 16 === 12 || step % 16 === 14) {
-                var percOsc = audioCtx.createOscillator();
-                var percGain = audioCtx.createGain();
-                percOsc.type = 'square';
-                percOsc.frequency.setValueAtTime(250, now);
-                percOsc.frequency.exponentialRampToValueAtTime(60, now + 0.08);
-
-                percGain.gain.setValueAtTime(0.35, now);
-                percGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-
-                percOsc.connect(percGain);
-                percGain.connect(audioCtx.destination);
-                percOsc.start(now);
-                percOsc.stop(now + 0.08);
-            }
-
-            // 3. Phonk Cowbell / Synth Lead
-            if (step % 8 === 2 || step % 8 === 6) {
-                var cbOsc1 = audioCtx.createOscillator();
-                var cbOsc2 = audioCtx.createOscillator();
-                var cbGain = audioCtx.createGain();
-
-                cbOsc1.type = 'square';
-                cbOsc2.type = 'square';
-
-                cbOsc1.frequency.setValueAtTime(587.33, now);
-                cbOsc2.frequency.setValueAtTime(880.00, now);
-
-                cbGain.gain.setValueAtTime(0.18, now);
-                cbGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-
-                cbOsc1.connect(cbGain);
-                cbOsc2.connect(cbGain);
-                cbGain.connect(audioCtx.destination);
-
-                cbOsc1.start(now);
-                cbOsc2.start(now);
-                cbOsc1.stop(now + 0.12);
-                cbOsc2.stop(now + 0.12);
-            }
-
-            // 4. Phonk Low-Pitch Vocal Loop Sample
-            if (step % 16 === 0) {
-                var chant = getRandomItem(vocalChants);
-                speakText(chant, 0.1, 1.4);
-            }
-
-            step = (step + 1) % 16;
-        }, 110);
     }
 
     function playSound(type, pitchMultiplier) {
@@ -228,7 +144,7 @@ GAME_ENGINE = """
     window.addEventListener("click", function() { 
         canvas.focus();
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        startNoBatidaoBGM();
+        playBGM();
     });
 
     window.addEventListener("keydown", function(e) {
@@ -242,7 +158,7 @@ GAME_ENGINE = """
                 if (e.key === 'f' || e.key === 'F' || e.code === 'KeyF') {
                     p1Ready = true;
                     if (CHARACTERS[p1Sel].isGod) {
-                        speakText(getRandomItem(GOD_PRAISES_SELECT), 0.1, 0.75);
+                        speakText(GOD_PRAISE_EXACT, 0.1, 0.75);
                     }
                 }
             }
@@ -252,7 +168,7 @@ GAME_ENGINE = """
                 if (e.key === 'k' || e.key === 'K' || e.code === 'KeyK') {
                     p2Ready = true;
                     if (CHARACTERS[p2Sel].isGod) {
-                        speakText(getRandomItem(GOD_PRAISES_SELECT), 0.1, 0.75);
+                        speakText(GOD_PRAISE_EXACT, 0.1, 0.75);
                     }
                 }
             }
@@ -273,7 +189,7 @@ GAME_ENGINE = """
         p1Ready = false;
         p2Ready = false;
         gameState = "SELECT";
-        startNoBatidaoBGM();
+        playBGM();
     }
 
     function startGame() {
