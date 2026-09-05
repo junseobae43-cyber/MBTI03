@@ -5,7 +5,7 @@ st.set_page_config(
     page_title="2P 레트로 격투 - GOD 배준서", page_icon="🥊", layout="wide"
 )
 
-st.title("🥊 2P 격투 게임 (배준서 강림 BGM &무한 재경기 지원)")
+st.title("🥊 2P 격투 게임 (No Batidão 펑크 비트 & 무한 재경기)")
 
 GAME_ENGINE = """
 <!DOCTYPE html>
@@ -20,7 +20,7 @@ GAME_ENGINE = """
 </style>
 </head>
 <body>
-    <div class="notice">⚠️ 게임 화면을 마우스로 '클릭'해야 BGM 및 사운드가 작동합니다!</div>
+    <div class="notice">⚠️ 게임 화면을 마우스로 '클릭'해야 No Batidão 비트가 시작됩니다!</div>
     <div class="info">
         <b>[1P 조작]</b> 이동: A, D | 점프: W | 공격: F | 궁극기: G <br>
         <b>[2P 조작]</b> 이동: ←, → | 점프: ↑ | 공격: K | 궁극기: L <br>
@@ -43,41 +43,66 @@ GAME_ENGINE = """
         }
     }
 
-    // 배준서 전용 웅장한 신성 배경음악 (BGM) 생성기
-    function startGodBGM() {
+    // 🔥 브라질 바이올리 펑크 'NO BATIDÃO' 리듬 엔진
+    function startBatidaoBGM() {
         stopBGM();
         if (audioCtx.state === 'suspended') audioCtx.resume();
 
-        var notes = [130.81, 155.56, 196.00, 261.63, 196.00, 155.56]; // C minor 웅장 멜로디
+        // 130 BPM Batidão 리듬 패턴 (총 16스텝)
         var step = 0;
 
         bgmInterval = setInterval(function() {
             var now = audioCtx.currentTime;
-            
-            var baseOsc = audioCtx.createOscillator();
-            var baseGain = audioCtx.createGain();
-            baseOsc.type = 'sawtooth';
-            baseOsc.frequency.setValueAtTime(65.41, now);
-            baseGain.gain.setValueAtTime(0.2, now);
-            baseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-            baseOsc.connect(baseGain);
-            baseGain.connect(audioCtx.destination);
-            baseOsc.start(now);
-            baseOsc.stop(now + 0.6);
 
-            var chordOsc = audioCtx.createOscillator();
-            var chordGain = audioCtx.createGain();
-            chordOsc.type = 'triangle';
-            chordOsc.frequency.setValueAtTime(notes[step % notes.length], now);
-            chordGain.gain.setValueAtTime(0.15, now);
-            chordGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-            chordOsc.connect(chordGain);
-            chordGain.connect(audioCtx.destination);
-            chordOsc.start(now);
-            chordOsc.stop(now + 0.5);
+            // 1. 묵직한 서브 베이스 (Kick & Sub Bass) - 1, 5, 9, 13 스텝
+            if (step % 4 === 0) {
+                var kickOsc = audioCtx.createOscillator();
+                var kickGain = audioCtx.createGain();
+                kickOsc.type = 'triangle';
+                kickOsc.frequency.setValueAtTime(150, now);
+                kickOsc.frequency.exponentialRampToValueAtTime(35, now + 0.18);
+                kickGain.gain.setValueAtTime(0.7, now);
+                kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+                kickOsc.connect(kickGain);
+                kickGain.connect(audioCtx.destination);
+                kickOsc.start(now);
+                kickOsc.stop(now + 0.18);
+            }
 
-            step++;
-        }, 350);
+            // 2. Batidão 특유의 싱코페이션 스네어 (Volt Mix / Tamborzão)
+            if (step % 16 === 3 || step % 16 === 6 || step % 16 === 10 || step % 16 === 12 || step % 16 === 14) {
+                var snareOsc = audioCtx.createOscillator();
+                var snareGain = audioCtx.createGain();
+                snareOsc.type = 'sawtooth';
+                snareOsc.frequency.setValueAtTime(220, now);
+                snareOsc.frequency.exponentialRampToValueAtTime(80, now + 0.1);
+                snareGain.gain.setValueAtTime(0.35, now);
+                snareGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                snareOsc.connect(snareGain);
+                snareGain.connect(audioCtx.destination);
+                snareOsc.start(now);
+                snareOsc.stop(now + 0.1);
+            }
+
+            // 3. 펑크 클랩 (High Clap/Snare)
+            if (step % 4 === 2) {
+                var noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.08, audioCtx.sampleRate);
+                var output = noiseBuffer.getChannelData(0);
+                for (var i = 0; i < noiseBuffer.length; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+                var noise = audioCtx.createBufferSource();
+                noise.buffer = noiseBuffer;
+                var clapGain = audioCtx.createGain();
+                clapGain.gain.setValueAtTime(0.25, now);
+                clapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                noise.connect(clapGain);
+                clapGain.connect(audioCtx.destination);
+                noise.start(now);
+            }
+
+            step = (step + 1) % 16;
+        }, 115); // 약 130 BPM
     }
 
     function playDivineChime() {
@@ -136,7 +161,7 @@ GAME_ENGINE = """
 
     function speakPraise(text) {
         playDivineChime();
-        startGodBGM();
+        startBatidaoBGM();
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
             var msg = new SpeechSynthesisUtterance(text);
