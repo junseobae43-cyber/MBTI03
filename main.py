@@ -1,4 +1,5 @@
-import urllib.parse
+import io
+from gtts import gTTS
 import streamlit as st
 
 # 1. 페이지 기본 설정
@@ -14,11 +15,18 @@ IMG_BLUSH = "Gemini_Generated_Image_jc1x4pjc1x4pjc1x (1).png"
 IMG_SAD = "Gemini_Generated_Image_jc1x4pjc1x4pjc1x (2).png"
 
 
-# 3. 일본어 음성 재생 함수 (Google Translate TTS 사용)
+# 3. 안정적인 gTTS 기반 일본어 음성 재생 함수
 def play_voice(text):
-    encoded_text = urllib.parse.quote(text)
-    tts_url = f"https://translate.google.com/translate_tts?ie=UTF-8&q={encoded_text}&tl=ja&client=tw-ob"
-    st.audio(tts_url, format="audio/mp3", autoplay=True)
+    try:
+        # gTTS를 통해 일본어 음성 생성 후 메모리 버퍼에 저장
+        tts = gTTS(text=text, lang="ja")
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+        # Streamlit 오디오 플레이어로 바로 재생
+        st.audio(fp, format="audio/mp3", autoplay=True)
+    except Exception as e:
+        st.warning("⚠️ 음성을 불러오는 중 오류가 발생했습니다.")
 
 
 # 4. 게임 데이터 초기화
@@ -46,7 +54,9 @@ if st.session_state.scene == "start":
     st.subheader("📍 1장: 방과 후 교실")
     st.image(IMG_HAPPY, caption="방과 후, 당신에게 다가오는 마린")
 
-    jp_voice = "ねえねえ！今日の授業めっちゃ退屈じゃなかった？放課後、資材見に行こうと思ってたんだけど、一緒に行く？"
+    jp_voice = (
+        "ねえねえ！今日の授業めっちゃ退屈じゃなかった？放課後、資材見に行こうと思ってたんだけど、一緒に行く？"
+    )
     kr_text = "마린: 야야! 오늘 수업 진짜 지루했지 않아? 방과 후에 옷 부자재 보러 가려고 했는데, 너 혹시 같이 갈래?"
 
     st.markdown(f"**{kr_text}**")
@@ -69,7 +79,9 @@ elif st.session_state.scene == "clubroom":
     st.subheader("📍 2장: 방과 후 가정실")
     st.image(IMG_BLUSH, caption="얼굴이 붉어진 마린")
 
-    jp_voice = "えっ…？サイズ測るの…？あ、うん！いいけど…ちょっと恥ずかしいかも…丁寧に測ってね？"
+    jp_voice = (
+        "えっ…？サイズ測るの…？あ、うん！いいけど…ちょっと恥ずかしいかも…丁寧に測ってね？"
+    )
     kr_text = "마린: 에...? 치수 잰다고...? 아, 응! 괜찮긴 한데... 조금 부끄러울지도... 조심해서 재줘?"
 
     st.markdown(f"**{kr_text}**")
@@ -92,7 +104,9 @@ elif st.session_state.scene == "shop":
     st.subheader("📍 2장: 부자재 상가 데이트")
     st.image(IMG_HAPPY, caption="신나서 원단을 고르는 마린")
 
-    jp_voice = "見て見て！このレーヨン生地、めっちゃ質感良くない！？これで衣装作ったら絶対ヤバいって！"
+    jp_voice = (
+        "見て見て！このレーヨン生地、めっちゃ質感良くない！？これで衣装作ったら絶対ヤバいって！"
+    )
     kr_text = "마린: 이것 좀 봐! 이 레이온 재질, 진짜 대박이지 않아?! 이걸로 의상 만들면 완전 대박일 거야!"
 
     st.markdown(f"**{kr_text}**")
@@ -116,7 +130,9 @@ elif st.session_state.scene == "rooftop":
 
     if st.session_state.affection >= 80:
         st.image(IMG_BLUSH, caption="노을 빛을 받으며 미소 짓는 마린")
-        jp_voice = "あのね…私、君と衣装作ってる時が一番楽しいんだ。…これからも、ずっと隣にいてくれる？"
+        jp_voice = (
+            "あのね…私、君と衣装作ってる時が一番楽しいんだ。…これからも、ずっと隣にいてくれる？"
+        )
         kr_text = "마린: 있잖아... 나, 너랑 의상 만들 때가 제일 즐거워. ...앞으로도 계속 내 옆에 있어줄래?"
 
         st.markdown(f"**{kr_text}**")
@@ -128,7 +144,9 @@ elif st.session_state.scene == "rooftop":
 
     else:
         st.image(IMG_SAD, caption="아쉬운 표정의 마린")
-        jp_voice = "今日は楽しかったよ！…でも、なんだかちょっと 寂しいな。また明日ね！"
+        jp_voice = (
+            "今日は楽しかったよ！…でも、なんだかちょっと 寂しいな。また明日ね！"
+        )
         kr_text = "마린: 오늘 즐거웠어! ...하지만 어쩐지 조금 아쉽네. 내일 또 봐!"
 
         st.markdown(f"**{kr_text}**")
