@@ -2,10 +2,10 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="2P 철권 스타일 격투 v3.0 - GOD 배준서", page_icon="🥊", layout="wide"
+    page_title="2P 철권 스타일 격투 v3.1 - GOD 배준서", page_icon="🥊", layout="wide"
 )
 
-st.title("🥊 2P 격투 게임 v3.0 (이펙트 & 공중전 대규모 업데이트)")
+st.title("🥊 2P 격투 게임 v3.1 (연타 방지 & 쿨타임 & 게이지 밸런스 패치)")
 
 GAME_ENGINE = """
 <!DOCTYPE html>
@@ -25,7 +25,7 @@ GAME_ENGINE = """
     <div class="info">
         <b>[1P]</b> 이동: A, D | 점프(2단): W | 가드: <b>S</b> | 공격: F | 궁극기: G | 잡기: <b>T</b><br>
         <b>[2P]</b> 이동: ←, → | 점프(2단): ↑ | 가드: <b>↓</b> | 공격: K | 궁극기: L | 잡기: <b>P</b><br>
-        <span style="color: #60a5fa;"><b>[게임 종료]</b> <b>R</b> 키로 재시작 | <b>[특수]</b> 공중에서 점프 키 추가 입력 시 2단 점프!</span>
+        <span style="color: #60a5fa;"><b>[밸런스]</b> 공격 후딜레이 쿨타임 적용 | 궁극기 게이지 획득량 감소 (+15%)</span>
     </div>
 
     <canvas id="gameCanvas" width="960" height="520" tabindex="0"></canvas>
@@ -170,7 +170,6 @@ function runGame() {
     var p1Sel = 0, p2Sel = 1;
     var p1Ready = false, p2Ready = false;
     var keys = {};
-    var lastJumpKeys = {};
     var p1 = {}, p2 = {};
 
     canvas.focus();
@@ -186,10 +185,20 @@ function runGame() {
         var k = e.key ? e.key.toLowerCase() : "";
         var c = e.code ? e.code : "";
 
-        if (!keys[k]) {
+        if (!keys[k] && !keys[c]) {
             if (gameState === "PLAY") {
                 if (k === 'w' || c === 'KeyW') handleJump(p1);
                 if (k === 'arrowup' || c === 'ArrowUp') handleJump(p2);
+
+                // 1P 단일 입력 처리
+                if (k === 'f' || c === 'KeyF') handleAttackInput(p1, p2, 'normal');
+                if (k === 'g' || c === 'KeyG') handleAttackInput(p1, p2, 'ult');
+                if (k === 't' || c === 'KeyT') handleAttackInput(p1, p2, 'grab');
+
+                // 2P 단일 입력 처리
+                if (k === 'k' || c === 'KeyK') handleAttackInput(p2, p1, 'normal');
+                if (k === 'l' || c === 'KeyL') handleAttackInput(p2, p1, 'ult');
+                if (k === 'p' || c === 'KeyP') handleAttackInput(p2, p1, 'grab');
             }
         }
 
@@ -235,6 +244,19 @@ function runGame() {
         }
     }
 
+    function handleAttackInput(p, enemy, type) {
+        if (p.isGuarding || p.attacking || p.attackCooldown) return;
+
+        if (type === 'normal') {
+            doAttack(p, enemy, p.atk, 85, false, false);
+        } else if (type === 'ult' && p.ultGauge >= 100) {
+            doAttack(p, enemy, p.ultAtk, 160, true, false);
+            p.ultGauge = 0;
+        } else if (type === 'grab') {
+            doAttack(p, enemy, Math.floor(p.atk * 1.25), 65, false, true);
+        }
+    }
+
     function resetToSelect() {
         p1Ready = false;
         p2Ready = false;
@@ -251,20 +273,22 @@ function runGame() {
             x: 150, y: 310, w: 50, h: 110, color: c1.color, beltColor: c1.beltColor,
             hairColor: c1.hairColor, skinColor: c1.skinColor, eyeColor: c1.eyeColor,
             name: c1.name, hp: c1.hp, maxHp: c1.hp, speed: c1.speed, atk: c1.atk, ultAtk: c1.ult,
-            isGod: c1.isGod, facing: 1, vy: 0, jumpCount: 0, isJumping: false, ultGauge: 0, attacking: false, isGuarding: false, attackBox: null
+            isGod: c1.isGod, facing: 1, vy: 0, jumpCount: 0, isJumping: false, ultGauge: 0, 
+            attacking: false, attackCooldown: false, isGuarding: false, attackBox: null
         };
 
         p2 = {
             x: 760, y: 310, w: 50, h: 110, color: c2.color, beltColor: c2.beltColor,
             hairColor: c2.hairColor, skinColor: c2.skinColor, eyeColor: c2.eyeColor,
             name: c2.name, hp: c2.hp, maxHp: c2.hp, speed: c2.speed, atk: c2.atk, ultAtk: c2.ult,
-            isGod: c2.isGod, facing: -1, vy: 0, jumpCount: 0, isJumping: false, ultGauge: 0, attacking: false, isGuarding: false, attackBox: null
+            isGod: c2.isGod, facing: -1, vy: 0, jumpCount: 0, isJumping: false, ultGauge: 0, 
+            attacking: false, attackCooldown: false, isGuarding: false, attackBox: null
         };
 
         gameState = "PLAY";
     }
 
-    function updatePlayer(p, enemy, lKey, rKey, gKey, aKey, uKey, tKey) {
+    function updatePlayer(p, enemy, lKey, rKey, gKey) {
         p.isGuarding = !!(keys[gKey]);
 
         if (!p.isGuarding) {
@@ -283,21 +307,12 @@ function runGame() {
         }
 
         p.x = Math.max(20, Math.min(canvas.width - p.w - 20, p.x));
-
-        if (!p.isGuarding && !p.attacking) {
-            if (keys[aKey]) {
-                doAttack(p, enemy, p.atk, 85, false, false);
-            } else if (keys[uKey] && p.ultGauge >= 100) {
-                doAttack(p, enemy, p.ultAtk, 160, true, false);
-                p.ultGauge = 0;
-            } else if (keys[tKey]) {
-                doAttack(p, enemy, Math.floor(p.atk * 1.25), 65, false, true);
-            }
-        }
     }
 
     function doAttack(p, enemy, damage, range, isUlt, isGrab) {
         p.attacking = true;
+        p.attackCooldown = true;
+
         var box = {
             x: p.facing === 1 ? p.x + p.w : p.x - range,
             y: p.y + 20,
@@ -342,13 +357,17 @@ function runGame() {
             }
 
             enemy.hp = Math.max(0, enemy.hp - finalDamage);
-            if (!isUlt) p.ultGauge = Math.min(100, p.ultGauge + 50);
+            if (!isUlt) p.ultGauge = Math.min(100, p.ultGauge + 15); // 궁 게이지 수급량 조정 (50 -> 15)
         }
 
         setTimeout(function() {
             p.attacking = false;
             p.attackBox = null;
         }, 150);
+
+        setTimeout(function() {
+            p.attackCooldown = false; // 공격 후딜레이 쿨타임 (350ms)
+        }, 350);
     }
 
     function updateAndDrawParticles() {
@@ -543,8 +562,8 @@ function runGame() {
         } else if (gameState === "PLAY") {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            updatePlayer(p1, p2, 'a', 'd', 's', 'f', 'g', 't');
-            updatePlayer(p2, p1, 'arrowleft', 'arrowright', 'arrowdown', 'k', 'l', 'p');
+            updatePlayer(p1, p2, 'a', 'd', 's');
+            updatePlayer(p2, p1, 'arrowleft', 'arrowright', 'arrowdown');
 
             ctx.fillStyle = "#1E293B";
             ctx.fillRect(0, 420, canvas.width, 100);
