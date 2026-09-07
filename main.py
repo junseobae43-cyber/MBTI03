@@ -5,7 +5,7 @@ st.set_page_config(
     page_title="2P 철권 스타일 격투 - GOD 배준서", page_icon="🥊", layout="wide"
 )
 
-st.title("🥊 2P 격투 게임 (⚡GOD 배준서 초월 패치⚡)")
+st.title("🥊 2P 격투 게임 (오류 수정 및 최적화 완료)")
 
 GAME_ENGINE = """
 <!DOCTYPE html>
@@ -21,7 +21,7 @@ GAME_ENGINE = """
 </style>
 </head>
 <body>
-    <div class="notice">⚡ GOD 배준서 스펙 초월적 붕괴 패치 완료! (HP 2000 / ATK 150) ⚡</div>
+    <div class="notice">⚡ GOD 배준서 스펙 초월 패치 (HP 2000 / ATK 150) ⚡</div>
     <div class="info">
         <b>[1P]</b> 이동: A, D | 점프: W | 가드: <b>S</b> | 공격: F | 궁극기: G | 잡기: <b>T</b><br>
         <b>[2P]</b> 이동: ←, → | 점프: ↑ | 가드: <b>↓</b> | 공격: K | 궁극기: L | 잡기: <b>P</b><br>
@@ -33,9 +33,9 @@ GAME_ENGINE = """
     <canvas id="gameCanvas" width="960" height="520" tabindex="0"></canvas>
 
 <script>
-window.addEventListener('DOMContentLoaded', function() {
+(function() {
     var canvas = document.getElementById("gameCanvas");
-    if(!canvas) return;
+    if (!canvas) return;
     var ctx = canvas.getContext("2d");
 
     var audioCtx = null;
@@ -116,52 +116,4 @@ window.addEventListener('DOMContentLoaded', function() {
         try {
             var osc = audioCtx.createOscillator();
             var gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            var now = audioCtx.currentTime;
-            var pitch = pitchMultiplier || 1.0;
-
-            if (type === 'hit') {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(160 * pitch, now);
-                osc.frequency.exponentialRampToValueAtTime(30 * pitch, now + 0.12);
-                gain.gain.setValueAtTime(0.25, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-                osc.start(now);
-                osc.stop(now + 0.12);
-            } else if (type === 'godHit') {
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(220, now);
-                osc.frequency.exponentialRampToValueAtTime(15, now + 0.35);
-                gain.gain.setValueAtTime(0.4, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-                osc.start(now);
-                osc.stop(now + 0.35);
-            } else if (type === 'ult') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(90 * pitch, now);
-                osc.frequency.linearRampToValueAtTime(650 * pitch, now + 0.4);
-                gain.gain.setValueAtTime(0.4, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-                osc.start(now);
-                osc.stop(now + 0.4);
-            } else if (type === 'block') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(300, now);
-                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
-                gain.gain.setValueAtTime(0.3, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                osc.start(now);
-                osc.stop(now + 0.1);
-            }
-        } catch(e) {}
-    }
-
-    // 배준서(GOD) 세계관 최강자 패치 데이터
-    var CHARACTERS = [
-        { name: "⚡배준서 (GOD)⚡", color: "#A855F7", beltColor: "#FFD700", hairColor: "#E2E8F0", skinColor: "#FFF0E5", eyeColor: "#EF4444", hp: 2000, speed: 18, atk: 150, ult: 999, isGod: true },
-        { name: "카즈야", color: "#DC2626", beltColor: "#000000", hairColor: "#1E293B", skinColor: "#F3D2C1", eyeColor: "#FF0000", hp: 200, speed: 7, atk: 22, ult: 80 },
-        { name: "진 카자마", color: "#16A34A", beltColor: "#000000", hairColor: "#0F172A", skinColor: "#FFE5D9", eyeColor: "#38BDF8", hp: 190, speed: 8, atk: 20, ult: 75 },
-        { name: "폴 피닉스", color: "#CA8A04", beltColor: "#000000", hairColor: "#FACC15", skinColor: "#FDE047", eyeColor: "#1E293B", hp: 230, speed: 6, atk: 28, ult: 95 },
-        { name: "마샬 로우", color: "#DB2777", beltColor: "#000000", hairColor: "#18181B", skinColor: "#EAB308", eyeColor: "#00
+            osc.
