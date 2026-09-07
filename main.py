@@ -2,10 +2,10 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="2P 철권 스타일 격투 v3.2 - GOD 배준서 10000000억 패치", page_icon="🥊", layout="wide"
+    page_title="2P 철권 스타일 격투 v3.3 - GOD 배준서 10000 패치", page_icon="🥊", layout="wide"
 )
 
-st.title("🥊 2P 격투 게임 v3.2 (GOD 배준서 능력치 10000000억 궁극 패치)")
+st.title("🥊 2P 격투 게임 v3.3 (GOD 배준서 능력치 10000 패치)")
 
 GAME_ENGINE = """
 <!DOCTYPE html>
@@ -21,11 +21,11 @@ GAME_ENGINE = """
 </style>
 </head>
 <body>
-    <div class="notice">⚡ GOD 배준서 (능력치: 10000000억) 절대존엄 강림 ⚡</div>
+    <div class="notice">⚡ GOD 배준서 (능력치: 10000) 절대존엄 강림 ⚡</div>
     <div class="info">
         <b>[1P]</b> 이동: A, D | 점프(2단): W | 가드: <b>S</b> | 공격: F | 궁극기: G | 잡기: <b>T</b><br>
         <b>[2P]</b> 이동: ←, → | 점프(2단): ↑ | 가드: <b>↓</b> | 공격: K | 궁극기: L | 잡기: <b>P</b><br>
-        <span style="color: #60a5fa;"><b>[특수]</b> 배준서 선택 시 모든 스탯 10000000억 발휘!</span>
+        <span style="color: #60a5fa;"><b>[특수]</b> 배준서 선택 시 모든 스탯 10000 발휘!</span>
     </div>
 
     <canvas id="gameCanvas" width="960" height="520" tabindex="0"></canvas>
@@ -148,7 +148,7 @@ function runGame() {
     }
 
     var CHARACTERS = [
-        { name: "⚡배준서 (GOD)⚡", color: "#A855F7", beltColor: "#FFD700", hairColor: "#E2E8F0", skinColor: "#FFF0E5", eyeColor: "#EF4444", hp: 999999999, speed: 25, atk: 999999999, ult: 999999999, isGod: true },
+        { name: "⚡배준서 (GOD)⚡", color: "#A855F7", beltColor: "#FFD700", hairColor: "#E2E8F0", skinColor: "#FFF0E5", eyeColor: "#EF4444", hp: 10000, speed: 20, atk: 10000, ult: 10000, isGod: true },
         { name: "카즈야", color: "#DC2626", beltColor: "#000000", hairColor: "#1E293B", skinColor: "#F3D2C1", eyeColor: "#FF0000", hp: 200, speed: 7, atk: 22, ult: 80 },
         { name: "진 카자마", color: "#16A34A", beltColor: "#000000", hairColor: "#0F172A", skinColor: "#FFE5D9", eyeColor: "#38BDF8", hp: 195, speed: 8, atk: 21, ult: 75 },
         { name: "폴 피닉스", color: "#CA8A04", beltColor: "#000000", hairColor: "#FACC15", skinColor: "#FDE047", eyeColor: "#1E293B", hp: 230, speed: 6, atk: 27, ult: 90 },
@@ -246,12 +246,12 @@ function runGame() {
         if (p.isGuarding || p.attacking || p.attackCooldown) return;
 
         if (type === 'normal') {
-            doAttack(p, enemy, p.isGod ? 999999999 : p.atk, 85, false, false);
+            doAttack(p, enemy, p.atk, 85, false, false);
         } else if (type === 'ult' && p.ultGauge >= 100) {
-            doAttack(p, enemy, p.isGod ? 999999999 : p.ultAtk, 160, true, false);
+            doAttack(p, enemy, p.ultAtk, 160, true, false);
             p.ultGauge = 0;
         } else if (type === 'grab') {
-            doAttack(p, enemy, p.isGod ? 999999999 : Math.floor(p.atk * 1.25), 65, false, true);
+            doAttack(p, enemy, Math.floor(p.atk * 1.25), 65, false, true);
         }
     }
 
@@ -322,7 +322,7 @@ function runGame() {
         if (box.x < enemy.x + enemy.w && box.x + box.w > enemy.x &&
             box.y < enemy.y + enemy.h && box.y + box.h > enemy.y) {
             
-            var finalDamage = p.isGod ? 999999999 : damage;
+            var finalDamage = damage;
             var hitX = enemy.x + enemy.w / 2;
             var hitY = enemy.y + enemy.h / 2;
 
@@ -342,7 +342,7 @@ function runGame() {
                         speakText(getRandomItem(GOD_PRAISES_ATTACK), 0.1, 1.0);
                         addHitParticle(hitX, hitY, "#C084FC");
                     }
-                    addDamageText(hitX, hitY - 20, "10000000억 데미지!", "#A855F7");
+                    addDamageText(hitX, hitY - 20, "-" + finalDamage, "#A855F7");
                 } else {
                     if (isUlt) {
                         playSound('ult', 1.0);
@@ -532,17 +532,10 @@ function runGame() {
             ctx.font = "10px sans-serif";
             ctx.fillStyle = "#94A3B8";
 
-            if (c.isGod) {
-                ctx.fillText("HP: 10000000억", x + 6, y + 120);
-                ctx.fillText("ATK: 10000000억", x + 6, y + 138);
-                ctx.fillText("SPD: 10000000억", x + 6, y + 156);
-                ctx.fillText("ULT: 10000000억", x + 6, y + 174);
-            } else {
-                ctx.fillText("HP: " + c.hp, x + 6, y + 120);
-                ctx.fillText("ATK: " + c.atk, x + 6, y + 138);
-                ctx.fillText("SPD: " + c.speed, x + 6, y + 156);
-                ctx.fillText("ULT: " + c.ult, x + 6, y + 174);
-            }
+            ctx.fillText("HP: " + c.hp, x + 6, y + 120);
+            ctx.fillText("ATK: " + c.atk, x + 6, y + 138);
+            ctx.fillText("SPD: " + c.speed, x + 6, y + 156);
+            ctx.fillText("ULT: " + c.ult, x + 6, y + 174);
 
             if (p1Sel === i) {
                 ctx.strokeStyle = "#EC4899";
@@ -604,8 +597,8 @@ function runGame() {
             ctx.fillStyle = "#FACC15"; ctx.fillRect(580, 48, (p2.ultGauge / 100) * 350, 6);
 
             ctx.fillStyle = "#FFFFFF"; ctx.font = "bold 15px sans-serif";
-            ctx.fillText("1P: " + p1.name + (p1.isGod ? " (10000000억)" : ""), 30, 15);
-            ctx.fillText("2P: " + p2.name + (p2.isGod ? " (10000000억)" : ""), 580, 15);
+            ctx.fillText("1P: " + p1.name + (p1.isGod ? " (10000)" : ""), 30, 15);
+            ctx.fillText("2P: " + p2.name + (p2.isGod ? " (10000)" : ""), 580, 15);
 
             if (p1.hp <= 0 || p2.hp <= 0) {
                 gameState = "END";
