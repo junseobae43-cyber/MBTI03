@@ -5,7 +5,7 @@ st.set_page_config(
     page_title="2P 철권 스타일 격투 - GOD 배준서", page_icon="🥊", layout="wide"
 )
 
-st.title("🥊 2P 격투 게임 (최종 완벽 수정 버전)")
+st.title("🥊 2P 격투 게임 (가드 & 잡기 시스템 추가)")
 
 GAME_ENGINE = """
 <!DOCTYPE html>
@@ -21,10 +21,10 @@ GAME_ENGINE = """
 </style>
 </head>
 <body>
-    <div class="notice">⚡ 완벽 구동 보장! 철권 8 스타일 선택 화면 & 대사 극대화 ⚡</div>
+    <div class="notice">🛡️ [S / ↓] 가드(데미지 90% 감소) & [T / P] 가드 파괴 잡기 추가! 🛡️</div>
     <div class="info">
-        <b>[1P 조작]</b> 이동: A, D | 점프: W | 공격: F | 궁극기: G <br>
-        <b>[2P 조작]</b> 이동: ←, → | 점프: ↑ | 공격: K | 궁극기: L <br>
+        <b>[1P]</b> 이동: A, D | 점프: W | 가드: <b>S</b> | 공격: F | 궁극기: G | 잡기: <b>T</b><br>
+        <b>[2P]</b> 이동: ←, → | 점프: ↑ | 가드: <b>↓</b> | 공격: K | 궁극기: L | 잡기: <b>P</b><br>
         <span style="color: #60a5fa;"><b>[게임 종료 후]</b> <b>R</b> 키를 누르면 재시작!</span>
     </div>
     
@@ -146,6 +146,14 @@ window.addEventListener('DOMContentLoaded', function() {
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
                 osc.start(now);
                 osc.stop(now + 0.4);
+            } else if (type === 'block') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
             }
         } catch(e) {}
     }
@@ -230,26 +238,30 @@ window.addEventListener('DOMContentLoaded', function() {
             x: 150, y: 320, w: 50, h: 110, color: c1.color, beltColor: c1.beltColor,
             hairColor: c1.hairColor, skinColor: c1.skinColor, eyeColor: c1.eyeColor,
             name: c1.name, hp: c1.hp, maxHp: c1.hp, speed: c1.speed, atk: c1.atk, ultAtk: c1.ult,
-            isGod: c1.isGod, facing: 1, vy: 0, isJumping: false, ultGauge: 0, attacking: false, attackBox: null
+            isGod: c1.isGod, facing: 1, vy: 0, isJumping: false, ultGauge: 0, attacking: false, isGuarding: false, attackBox: null
         };
 
         p2 = {
             x: 760, y: 320, w: 50, h: 110, color: c2.color, beltColor: c2.beltColor,
             hairColor: c2.hairColor, skinColor: c2.skinColor, eyeColor: c2.eyeColor,
             name: c2.name, hp: c2.hp, maxHp: c2.hp, speed: c2.speed, atk: c2.atk, ultAtk: c2.ult,
-            isGod: c2.isGod, facing: -1, vy: 0, isJumping: false, ultGauge: 0, attacking: false, attackBox: null
+            isGod: c2.isGod, facing: -1, vy: 0, isJumping: false, ultGauge: 0, attacking: false, isGuarding: false, attackBox: null
         };
 
         gameState = "PLAY";
     }
 
-    function updatePlayer(p, enemy, l1, l2, r1, r2, j1, j2, a1, a2, u1, u2) {
-        if (keys[l1] || keys[l2]) { p.x -= p.speed; p.facing = -1; }
-        if (keys[r1] || keys[r2]) { p.x += p.speed; p.facing = 1; }
+    function updatePlayer(p, enemy, l1, l2, r1, r2, j1, j2, g1, g2, a1, a2, u1, u2, t1, t2) {
+        p.isGuarding = (keys[g1] || keys[g2]);
 
-        if ((keys[j1] || keys[j2]) && !p.isJumping) {
-            p.vy = -15;
-            p.isJumping = true;
+        if (!p.isGuarding) {
+            if (keys[l1] || keys[l2]) { p.x -= p.speed; p.facing = -1; }
+            if (keys[r1] || keys[r2]) { p.x += p.speed; p.facing = 1; }
+
+            if ((keys[j1] || keys[j2]) && !p.isJumping) {
+                p.vy = -15;
+                p.isJumping = true;
+            }
         }
 
         p.vy += 0.85;
@@ -262,16 +274,19 @@ window.addEventListener('DOMContentLoaded', function() {
 
         p.x = Math.max(20, Math.min(canvas.width - p.w - 20, p.x));
 
-        if ((keys[a1] || keys[a2]) && !p.attacking) {
-            doAttack(p, enemy, p.atk, 85, false);
-        }
-        if ((keys[u1] || keys[u2]) && !p.attacking && p.ultGauge >= 100) {
-            doAttack(p, enemy, p.ultAtk, 160, true);
-            p.ultGauge = 0;
+        if (!p.isGuarding && !p.attacking) {
+            if (keys[a1] || keys[a2]) {
+                doAttack(p, enemy, p.atk, 85, false, false);
+            } else if ((keys[u1] || keys[u2]) && p.ultGauge >= 100) {
+                doAttack(p, enemy, p.ultAtk, 160, true, false);
+                p.ultGauge = 0;
+            } else if (keys[t1] || keys[t2]) {
+                doAttack(p, enemy, Math.floor(p.atk * 1.2), 65, false, true);
+            }
         }
     }
 
-    function doAttack(p, enemy, damage, range, isUlt) {
+    function doAttack(p, enemy, damage, range, isUlt, isGrab) {
         p.attacking = true;
         var box = {
             x: p.facing === 1 ? p.x + p.w : p.x - range,
@@ -283,21 +298,29 @@ window.addEventListener('DOMContentLoaded', function() {
 
         if (box.x < enemy.x + enemy.w && box.x + box.w > enemy.x &&
             box.y < enemy.y + enemy.h && box.y + box.h > enemy.y) {
-            enemy.hp = Math.max(0, enemy.hp - damage);
-            if (!isUlt) p.ultGauge = Math.min(100, p.ultGauge + 50);
-
-            if (p.isGod) {
-                if (isUlt) {
-                    playSound('ult', 0.5);
-                    speakText(getRandomItem(GOD_PRAISES_ULT), 0.1, 0.8);
-                } else {
-                    playSound('godHit', 1.0);
-                    speakText(getRandomItem(GOD_PRAISES_ATTACK), 0.1, 1.0);
-                }
+            
+            var finalDamage = damage;
+            
+            if (enemy.isGuarding && !isGrab) {
+                finalDamage = Math.max(1, Math.floor(damage * 0.1));
+                playSound('block', 1.0);
             } else {
-                if (isUlt) playSound('ult', 1.0);
-                else playSound('hit', 1.0);
+                if (p.isGod) {
+                    if (isUlt) {
+                        playSound('ult', 0.5);
+                        speakText(getRandomItem(GOD_PRAISES_ULT), 0.1, 0.8);
+                    } else {
+                        playSound('godHit', 1.0);
+                        speakText(getRandomItem(GOD_PRAISES_ATTACK), 0.1, 1.0);
+                    }
+                } else {
+                    if (isUlt) playSound('ult', 1.0);
+                    else playSound('hit', 1.0);
+                }
             }
+
+            enemy.hp = Math.max(0, enemy.hp - finalDamage);
+            if (!isUlt) p.ultGauge = Math.min(100, p.ultGauge + 50);
         }
 
         setTimeout(function() {
@@ -394,6 +417,16 @@ window.addEventListener('DOMContentLoaded', function() {
         } else {
             ctx.fillRect(f === 1 ? x + 30 : x + 2, y + 35, 14, 20);
         }
+
+        if (p.isGuarding) {
+            ctx.fillStyle = "rgba(56, 189, 248, 0.5)";
+            ctx.beginPath();
+            ctx.arc(x + 25, y + 55, 45, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#38BDF8";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
     }
 
     function drawSelectScreen() {
@@ -449,8 +482,8 @@ window.addEventListener('DOMContentLoaded', function() {
         } else if (gameState === "PLAY") {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            updatePlayer(p1, p2, 'a', 'KeyA', 'd', 'KeyD', 'w', 'KeyW', 'f', 'KeyF', 'g', 'KeyG');
-            updatePlayer(p2, p1, 'ArrowLeft', 'ArrowLeft', 'ArrowRight', 'ArrowRight', 'ArrowUp', 'ArrowUp', 'k', 'KeyK', 'l', 'KeyL');
+            updatePlayer(p1, p2, 'a', 'KeyA', 'd', 'KeyD', 'w', 'KeyW', 's', 'KeyS', 'f', 'KeyF', 'g', 'KeyG', 't', 'KeyT');
+            updatePlayer(p2, p1, 'ArrowLeft', 'ArrowLeft', 'ArrowRight', 'ArrowRight', 'ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'k', 'KeyK', 'l', 'KeyL', 'p', 'KeyP');
 
             ctx.fillStyle = "#1E293B";
             ctx.fillRect(0, 430, canvas.width, 90);
