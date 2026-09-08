@@ -2,12 +2,12 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="TEKKEN 8 CHARACTER SELECT EDITION", page_icon="🥊", layout="wide"
+    page_title="TEKKEN 8 BATTLE ENGINE", page_icon="🥊", layout="wide"
 )
 
-st.title("🥊 철권 8 스타일 캐릭터 선택 & 3D 대전")
+st.title("🥊 철권 8 스타일 3D 대전 격투 (Heat System & HUD)")
 
-GAME_ENGINE_SELECT_3D = """
+GAME_ENGINE_TEKKEN8 = """
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -17,47 +17,74 @@ GAME_ENGINE_SELECT_3D = """
     * { box-sizing: border-box; }
     body { background-color: #030308; color: white; text-align: center; font-family: 'Press Start 2P', cursive, sans-serif; margin: 0; padding: 10px; overflow: hidden; user-select: none; }
     
-    #app-container { position: relative; width: 960px; height: 540px; margin: 0 auto; border: 4px solid #ef4444; border-radius: 12px; box-shadow: 0 0 30px rgba(239, 68, 68, 0.4); background: radial-gradient(circle, #1a0826 0%, #05020a 100%); overflow: hidden; }
-
-    /* --- 캐릭터 선택 UI --- */
-    #select-screen { position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 10; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
-    .select-title { font-size: 20px; color: #facc15; text-shadow: 0 0 10px #facc15, 2px 2px #000; margin-top: 5px; }
-
-    /* 철권8 스타일 사선 그리드 */
-    .grid-container { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-    .grid-row { display: flex; gap: 6px; transform: skewX(-18deg); }
-    
-    .char-slot {
-        width: 80px; height: 75px; background: #1e1b4b; border: 2px solid #334155;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        position: relative; transition: all 0.15s ease; cursor: pointer; overflow: hidden;
+    #app-container { 
+        position: relative; 
+        width: 960px; 
+        height: 540px; 
+        margin: 0 auto; 
+        border: 3px solid #f43f5e; 
+        border-radius: 8px; 
+        box-shadow: 0 0 35px rgba(244, 63, 94, 0.5); 
+        background: #000; 
+        overflow: hidden; 
     }
-    .char-slot .avatar { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff; margin-bottom: 4px; transform: skewX(18deg); }
-    .char-slot .char-name { font-size: 7px; color: #cbd5e1; transform: skewX(18deg); text-align: center; }
 
-    /* 커서 및 선택 효과 */
-    .char-slot.p1-hover { border: 3px solid #ef4444; box-shadow: 0 0 15px #ef4444; z-index: 2; }
-    .char-slot.p2-hover { border: 3px solid #3b82f6; box-shadow: 0 0 15px #3b82f6; z-index: 2; }
-    .char-slot.p1-hover.p2-hover { border: 3px solid #a855f7; box-shadow: 0 0 15px #a855f7; }
-    .char-slot.selected { background: #3730a3; }
+    /* 3D Canvas */
+    #game-canvas { width: 100%; height: 100%; display: block; }
 
-    .player-banner { position: absolute; bottom: 25px; width: 220px; padding: 12px; background: rgba(0,0,0,0.8); border-radius: 8px; font-size: 11px; text-align: center; }
-    #p1-banner { left: 20px; border-left: 6px solid #ef4444; color: #fca5a5; }
-    #p2-banner { right: 20px; border-right: 6px solid #3b82f6; color: #93c5fd; }
-    .status-text { font-size: 10px; margin-top: 6px; color: #facc15; }
+    /* UI 레이어 */
+    #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
-    /* --- 3D 게임 화면 --- */
-    #game-canvas { display: none; width: 100%; height: 100%; }
-    #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; }
-    .hp-bar-bg { position: absolute; top: 20px; width: 380px; height: 24px; background: #1e293b; border: 2px solid #fff; }
+    /* 중앙 타이머 & 라운드 */
+    #timer-container {
+        position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+        font-size: 32px; font-weight: bold; color: #fff; text-shadow: 0 0 10px #f43f5e, 2px 2px #000;
+        z-index: 10;
+    }
+    .round-dots { font-size: 10px; color: #64748b; margin-bottom: 2px; letter-spacing: 4px; }
+    .round-dots span.win { color: #facc15; text-shadow: 0 0 8px #facc15; }
+
+    /* 상단 체력바 (기울어진 철권8 스타일) */
+    .hp-container { position: absolute; top: 20px; width: 380px; }
+    #p1-hp-container { left: 15px; }
+    #p2-hp-container { right: 15px; }
+
+    .hp-bar-outer {
+        width: 100%; height: 26px; background: rgba(15, 23, 42, 0.85);
+        border: 2px solid #cbd5e1; transform: skewX(-20deg); overflow: hidden;
+        box-shadow: inset 0 0 10px #000;
+    }
     .hp-bar-fill { height: 100%; transition: width 0.1s linear; }
-    #p1-hp-bg { left: 30px; } #p1-hp { background: #ef4444; width: 100%; }
-    #p2-hp-bg { right: 30px; } #p2-hp { background: #3b82f6; width: 100%; float: right; }
-    .p-name { position: absolute; top: 48px; font-size: 12px; }
-    #p1-name-ui { left: 30px; color: #ef4444; }
-    #p2-name-ui { right: 30px; color: #3b82f6; }
-    #vs-text { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); font-size: 22px; color: #facc15; }
-    #announcer { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 36px; color: #facc15; text-shadow: 3px 3px #000; }
+    #p1-hp { background: linear-gradient(90deg, #ef4444 0%, #f97316 100%); width: 100%; }
+    #p2-hp { background: linear-gradient(90deg, #06b6d4 0%, #3b82f6 100%); width: 100%; float: right; }
+
+    /* 히트 게이지 (Heat Gauge) */
+    .heat-bar-outer {
+        width: 90%; height: 6px; background: #1e293b;
+        transform: skewX(-20deg); margin-top: 4px; border: 1px solid #475569;
+    }
+    #p1-heat-outer { float: left; } #p2-heat-outer { float: right; }
+    .heat-bar-fill { height: 100%; background: #facc15; box-shadow: 0 0 8px #facc15; width: 100%; }
+
+    /* 캐릭터 프로필 & 이름 */
+    .char-profile { position: absolute; top: 56px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+    #p1-name { left: 20px; color: #fca5a5; text-shadow: 0 0 6px #ef4444; }
+    #p2-name { right: 20px; color: #93c5fd; text-shadow: 0 0 6px #3b82f6; }
+
+    /* 철권 8 스페셜 스타일 스킬 패널 (좌/우 하단) */
+    .special-panel {
+        position: absolute; bottom: 20px; width: 180px;
+        background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px; padding: 8px 10px; font-family: sans-serif; font-size: 10px; color: #cbd5e1;
+        backdrop-filter: blur(4px); text-align: left;
+    }
+    #p1-special { left: 15px; border-left: 4px solid #ef4444; }
+    #p2-special { right: 15px; border-right: 4px solid #3b82f6; text-align: right; }
+    .skill-row { margin: 4px 0; display: flex; align-items: center; justify-content: space-between; }
+    .key-badge { background: #334155; border: 1px solid #94a3b8; border-radius: 3px; padding: 1px 4px; font-size: 9px; color: #facc15; font-weight: bold; }
+
+    /* 아나운서 텍스트 */
+    #announcer { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 42px; color: #facc15; text-shadow: 0 0 20px #ef4444, 4px 4px #000; }
 
     .controls-guide { font-family: sans-serif; font-size: 13px; color: #cbd5e1; background: #111827; padding: 10px 20px; border-radius: 8px; border: 1px solid #374151; margin-top: 10px; display: inline-block; }
 </style>
@@ -65,268 +92,308 @@ GAME_ENGINE_SELECT_3D = """
 </head>
 <body>
     <div id="app-container">
-        <!-- 캐릭터 선택 화면 -->
-        <div id="select-screen">
-            <div class="select-title">SELECT YOUR FIGHTER</div>
-            
-            <div class="grid-container" id="grid-container"></div>
-
-            <div id="p1-banner">
-                <div>1P PLAYER</div>
-                <div id="p1-char-name" style="font-size: 14px; margin-top: 4px; color: #fff;">KAZUYA</div>
-                <div id="p1-status" class="status-text">[F] SELECT</div>
-            </div>
-
-            <div id="p2-banner">
-                <div>2P PLAYER</div>
-                <div id="p2-char-name" style="font-size: 14px; margin-top: 4px; color: #fff;">JIN</div>
-                <div id="p2-status" class="status-text">[K] SELECT</div>
-            </div>
-        </div>
-
-        <!-- 3D 인게임 CANVAS & UI -->
         <canvas id="game-canvas"></canvas>
+
+        <!-- UI 레이어 -->
         <div id="ui-layer">
-            <div id="p1-hp-bg" class="hp-bar-bg"><div id="p1-hp" class="hp-bar-fill"></div></div>
-            <div id="p1-name-ui" class="p-name">KAZUYA</div>
-            <div id="vs-text">VS</div>
-            <div id="p2-hp-bg" class="hp-bar-bg"><div id="p2-hp" class="hp-bar-fill"></div></div>
-            <div id="p2-name-ui" class="p-name">JIN</div>
+            <!-- 중앙 타이머 & 라운드 -->
+            <div id="timer-container">
+                <div class="round-dots"><span class="win">●</span>●● &nbsp; ●●●</div>
+                <span id="timer">60</span>
+            </div>
+
+            <!-- 1P HP & HEAT -->
+            <div id="p1-hp-container" class="hp-container">
+                <div class="hp-bar-outer"><div id="p1-hp" class="hp-bar-fill"></div></div>
+                <div id="p1-heat-outer" class="heat-bar-outer"><div id="p1-heat" class="heat-bar-fill"></div></div>
+            </div>
+            <div id="p1-name" class="char-profile">JIN</div>
+
+            <!-- 2P HP & HEAT -->
+            <div id="p2-hp-container" class="hp-container">
+                <div class="hp-bar-outer"><div id="p2-hp" class="hp-bar-fill"></div></div>
+                <div id="p2-heat-outer" class="heat-bar-outer"><div id="p2-heat" class="heat-bar-fill"></div></div>
+            </div>
+            <div id="p2-name" class="char-profile">XIAOYU</div>
+
+            <!-- 1P 스페셜 패널 -->
+            <div id="p1-special" class="special-panel">
+                <div class="skill-row"><span>Specialty Move</span> <span class="key-badge">F</span></div>
+                <div class="skill-row"><span>Air Combos</span> <span class="key-badge">G</span></div>
+                <div class="skill-row"><span>Power Crush</span> <span class="key-badge">T</span></div>
+                <div class="skill-row"><span>Heat Smash</span> <span class="key-badge">R</span></div>
+            </div>
+
+            <!-- 2P 스페셜 패널 -->
+            <div id="p2-special" class="special-panel">
+                <div class="skill-row"><span class="key-badge">K</span> <span>Specialty Move</span></div>
+                <div class="skill-row"><span class="key-badge">L</span> <span>Air Combos</span></div>
+                <div class="skill-row"><span class="key-badge">P</span> <span>Power Crush</span></div>
+                <div class="skill-row"><span class="key-badge">O</span> <span>Heat Smash</span></div>
+            </div>
+
             <div id="announcer">READY...</div>
         </div>
     </div>
 
     <div class="controls-guide">
-        <b>[선택 화면]</b> 1P: A/D (이동), F (선택) | 2P: ←/→ (이동), K (선택)<br>
-        <b>[인게임]</b> 1P: A/D(이동), W(점프), F(펀치), G(킥) | 2P: ←/→(이동), ↑(점프), K(펀치), L(킥)
+        <b>[1P]</b> 이동: A, D | 점프: W | 펀치: F | 킥: G | 잡기: T | <b>HEAT SMASH: R</b><br>
+        <b>[2P]</b> 이동: ←, → | 점프: ↑ | 펀치: K | 킥: L | 잡기: P | <b>HEAT SMASH: O</b>
     </div>
 
 <script>
-// 32명 로스터 데이터
-var CHARACTERS = [
-    { id: 0, name: "JIN", color: "#16a34a", skin: "#fed7aa" },
-    { id: 1, name: "KAZUYA", color: "#dc2626", skin: "#fca5a5" },
-    { id: 2, name: "JUN", color: "#38bdf8", skin: "#fef08a" },
-    { id: 3, name: "PAUL", color: "#ca8a04", skin: "#fde047" },
-    { id: 4, name: "LAW", color: "#db2777", skin: "#fcd34d" },
-    { id: 5, name: "KING", color: "#0891b2", skin: "#fdba74" },
-    { id: 6, name: "LARS", color: "#a855f7", skin: "#fed7aa" },
-    { id: 7, name: "XIAOYU", color: "#f43f5e", skin: "#fecdd3" },
-    { id: 8, name: "JACK-8", color: "#475569", skin: "#64748b" },
-    { id: 9, name: "NINA", color: "#e11d48", skin: "#fecdd3" },
-    { id: 10, name: "ASUKA", color: "#0284c7", skin: "#fed7aa" },
-    { id: 11, name: "LEROY", color: "#f59e0b", skin: "#d97706" },
-    { id: 12, name: "LILI", color: "#ec4899", skin: "#fef08a" },
-    { id: 13, name: "HWOARANG", color: "#ea580c", skin: "#fed7aa" },
-    { id: 14, name: "BRYAN", color: "#52525b", skin: "#e4e4e7" },
-    { id: 15, name: "CLAUDIO", color: "#2563eb", skin: "#fed7aa" },
-    { id: 16, name: "AZUCENA", color: "#10b981", skin: "#fcd34d" },
-    { id: 17, name: "RAVEN", color: "#1e1b4b", skin: "#78350f" },
-    { id: 18, name: "LEO", color: "#84cc16", skin: "#fef08a" },
-    { id: 19, name: "YOSHIMITSU", color: "#0d9488", skin: "#94a3b8" },
-    { id: 20, name: "STEVE", color: "#0284c7", skin: "#fed7aa" },
-    { id: 21, name: "DRAGUNOV", color: "#334155", skin: "#cbd5e1" },
-    { id: 22, name: "SHAHEEN", color: "#d97706", skin: "#fed7aa" },
-    { id: 23, name: "KUMA", color: "#78350f", skin: "#451a03" },
-    { id: 24, name: "PANDA", color: "#f8fafc", skin: "#0f172a" },
-    { id: 25, name: "ZAFINA", color: "#7e22ce", skin: "#fecdd3" },
-    { id: 26, name: "LEE", color: "#9333ea", skin: "#fef08a" },
-    { id: 27, name: "ALISA", color: "#f472b6", skin: "#fecdd3" },
-    { id: 28, name: "VICTOR", color: "#475569", skin: "#fed7aa" },
-    { id: 29, name: "RENA", color: "#818cf8", skin: "#fecdd3" },
-    { id: 30, name: "EDDY", color: "#15803d", skin: "#b45309" },
-    { id: 31, name: "LYDIA", color: "#e2e8f0", skin: "#fed7aa" }
-];
-
-var p1Idx = 1, p2Idx = 0;
-var p1Ready = false, p2Ready = false;
-
-// 4행 8열 사선 그리드 세팅
-function initSelectGrid() {
-    var container = document.getElementById('grid-container');
-    container.innerHTML = '';
-
-    for (var r = 0; r < 4; r++) {
-        var rowDiv = document.createElement('div');
-        rowDiv.className = 'grid-row';
-
-        for (var c = 0; c < 8; c++) {
-            var idx = r * 8 + c;
-            var charData = CHARACTERS[idx];
-
-            var slot = document.createElement('div');
-            slot.className = 'char-slot';
-            slot.id = 'slot-' + idx;
-
-            var avatar = document.createElement('div');
-            avatar.className = 'avatar';
-            avatar.style.backgroundColor = charData.skin;
-
-            var name = document.createElement('div');
-            name.className = 'char-name';
-            name.innerText = charData.name;
-
-            slot.appendChild(avatar);
-            slot.appendChild(name);
-            rowDiv.appendChild(slot);
-        }
-        container.appendChild(rowDiv);
-    }
-    updateSelectUI();
-}
-
-function updateSelectUI() {
-    document.querySelectorAll('.char-slot').forEach(function(s) {
-        s.classList.remove('p1-hover', 'p2-hover');
-    });
-
-    var s1 = document.getElementById('slot-' + p1Idx);
-    var s2 = document.getElementById('slot-' + p2Idx);
-
-    if (s1) s1.classList.add('p1-hover');
-    if (s2) s2.classList.add('p2-hover');
-
-    document.getElementById('p1-char-name').innerText = CHARACTERS[p1Idx].name;
-    document.getElementById('p2-char-name').innerText = CHARACTERS[p2Idx].name;
-
-    document.getElementById('p1-status').innerText = p1Ready ? "READY!" : "[F] SELECT";
-    document.getElementById('p1-status').style.color = p1Ready ? "#4ade80" : "#facc15";
-
-    document.getElementById('p2-status').innerText = p2Ready ? "READY!" : "[K] SELECT";
-    document.getElementById('p2-status').style.color = p2Ready ? "#4ade80" : "#facc15";
-
-    if (p1Ready && p2Ready) {
-        setTimeout(start3DMatch, 600);
-    }
-}
-
-window.addEventListener('keydown', function(e) {
-    var k = e.key.toLowerCase();
-
-    // 1P 조작 (A, D, F)
-    if (!p1Ready) {
-        if (k === 'a') { p1Idx = (p1Idx - 1 + 32) % 32; updateSelectUI(); }
-        if (k === 'd') { p1Idx = (p1Idx + 1) % 32; updateSelectUI(); }
-        if (k === 'f') { p1Ready = true; updateSelectUI(); }
-    }
-
-    // 2P 조작 (Left, Right, K)
-    if (!p2Ready) {
-        if (k === 'arrowleft') { p2Idx = (p2Idx - 1 + 32) % 32; updateSelectUI(); }
-        if (k === 'arrowright') { p2Idx = (p2Idx + 1) % 32; updateSelectUI(); }
-        if (k === 'k') { p2Ready = true; updateSelectUI(); }
-    }
-});
-
-// Three.js 3D 대전 진입
-function start3DMatch() {
-    document.getElementById('select-screen').style.display = 'none';
-    document.getElementById('game-canvas').style.display = 'block';
-    document.getElementById('ui-layer').style.display = 'block';
-
-    document.getElementById('p1-name-ui').innerText = CHARACTERS[p1Idx].name;
-    document.getElementById('p2-name-ui').innerText = CHARACTERS[p2Idx].name;
-
-    init3DEngine();
-}
-
-function init3DEngine() {
+function initTekken8Game() {
     var canvas = document.getElementById('game-canvas');
     var scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0a16);
+    scene.background = new THREE.Color(0x05050d);
+    scene.fog = new THREE.FogExp2(0x05050d, 0.018);
 
     var camera = new THREE.PerspectiveCamera(45, 960 / 540, 0.1, 1000);
     var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     renderer.setSize(960, 540);
+    renderer.shadowMap.enabled = true;
 
-    var ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    // 조명 (화려한 네온 격투장 느킴)
+    var ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
 
-    var dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.set(10, 20, 15);
-    scene.add(dirLight);
+    var mainLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    mainLight.position.set(10, 25, 15);
+    mainLight.castShadow = true;
+    scene.add(mainLight);
 
-    // 바닥
+    var redLight = new THREE.PointLight(0xef4444, 2, 25);
+    redLight.position.set(-8, 4, 2);
+    scene.add(redLight);
+
+    var blueLight = new THREE.PointLight(0x3b82f6, 2, 25);
+    blueLight.position.set(8, 4, 2);
+    scene.add(blueLight);
+
+    // 바닥 (철권 8 화려한 아레나 매쉬)
     var floorGeo = new THREE.PlaneGeometry(60, 60);
-    var floorMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.4 });
+    var floorMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.2, metalness: 0.5 });
     var floor = new THREE.Mesh(floorGeo, floorMat);
     floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
     scene.add(floor);
 
-    var grid = new THREE.GridHelper(60, 30, 0xef4444, 0x334155);
+    var grid = new THREE.GridHelper(60, 30, 0xef4444, 0x1e293b);
     grid.position.y = 0.01;
     scene.add(grid);
 
-    function createFighter(charData) {
+    // 파티클 엔진 (스파크 / 폭발)
+    var particles = [];
+    function createHitSpark(x, y, z, colorHex, count) {
+        for (var i = 0; i < count; i++) {
+            var geo = new THREE.SphereGeometry(Math.random() * 0.12 + 0.04, 8, 8);
+            var mat = new THREE.MeshBasicMaterial({ color: colorHex });
+            var p = new THREE.Mesh(geo, mat);
+            p.position.set(x, y, z);
+            scene.add(p);
+
+            particles.push({
+                mesh: p,
+                vx: (Math.random() - 0.5) * 0.4,
+                vy: (Math.random() - 0.3) * 0.4,
+                vz: (Math.random() - 0.5) * 0.4,
+                life: 1.0
+            });
+        }
+    }
+
+    // 캐릭터 생성
+    function createFighter(colorHex, isP1) {
         var group = new THREE.Group();
-        var mat = new THREE.MeshStandardMaterial({ color: charData.color });
-        var torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.5), mat);
+        var mat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.3, metalness: 0.3 });
+        
+        // 상체
+        var torso = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.25, 0.5), mat);
         torso.position.y = 1.6;
+        torso.castShadow = true;
         group.add(torso);
 
-        var head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), new THREE.MeshStandardMaterial({ color: charData.skin }));
+        // 머리
+        var head = new THREE.Mesh(new THREE.SphereGeometry(0.35, 16, 16), new THREE.MeshStandardMaterial({ color: 0xfdba74 }));
         head.position.y = 0.95;
+        head.castShadow = true;
         torso.add(head);
 
-        var rArm = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.8, 0.25), mat);
+        // 오른팔
+        var rArm = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.85, 0.25), mat);
         rArm.position.set(0.55, 0.2, 0);
+        rArm.castShadow = true;
         torso.add(rArm);
 
+        // 오른다리
+        var rLeg = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.95, 0.3), mat);
+        rLeg.position.set(0.25, -0.9, 0);
+        rLeg.castShadow = true;
+        torso.add(rLeg);
+
         return {
-            group: group, torso: torso, rArm: rArm,
-            x: 0, y: 0, hp: 100, facing: 1, hitStun: 0
+            group: group, torso: torso, rArm: rArm, rLeg: rLeg,
+            x: isP1 ? -3.5 : 3.5, y: 0, hp: 100, heat: 100, facing: isP1 ? 1 : -1,
+            isGrounded: true, vy: 0, isAttacking: false, hitStun: 0
         };
     }
 
-    var p1 = createFighter(CHARACTERS[p1Idx]);
-    var p2 = createFighter(CHARACTERS[p2Idx]);
-    p1.x = -4; p2.x = 4;
-    p1.facing = 1; p2.facing = -1;
+    var p1 = createFighter(0xdc2626, true);
+    var p2 = createFighter(0x0284c7, false);
 
     scene.add(p1.group);
     scene.add(p2.group);
 
-    var inGameKeys = {};
-    window.addEventListener('keydown', function(e) { inGameKeys[e.key.toLowerCase()] = true; });
-    window.addEventListener('keyup', function(e) { inGameKeys[e.key.toLowerCase()] = false; });
+    var keys = {};
+    window.addEventListener('keydown', function(e) { keys[e.key.toLowerCase()] = true; });
+    window.addEventListener('keyup', function(e) { keys[e.key.toLowerCase()] = false; });
+
+    var cameraShake = 0;
+    var timerValue = 60;
+    var gameState = "PLAY";
+
+    // 타이머 인터벌
+    setInterval(function() {
+        if (gameState === "PLAY" && timerValue > 0) {
+            timerValue--;
+            document.getElementById('timer').innerText = timerValue;
+        }
+    }, 1000);
 
     setTimeout(function() {
         document.getElementById('announcer').innerText = "FIGHT!";
         setTimeout(function() { document.getElementById('announcer').innerText = ""; }, 1000);
     }, 1000);
 
-    function gameLoop() {
-        // 1P
-        if (inGameKeys['a']) { p1.x -= 0.12; p1.facing = -1; }
-        if (inGameKeys['d']) { p1.x += 0.12; p1.facing = 1; }
-        
-        // 2P
-        if (inGameKeys['arrowleft']) { p2.x -= 0.12; p2.facing = -1; }
-        if (inGameKeys['arrowright']) { p2.x += 0.12; p2.facing = 1; }
+    // 공격 처리 (철권 8 화려한 파티클 연출)
+    function handleAttack(attacker, defender, type) {
+        if (attacker.isAttacking || attacker.hitStun > 0) return;
 
-        [p1, p2].forEach(function(p) {
-            p.group.position.set(p.x, p.y, 0);
-            p.group.rotation.y = p.facing === 1 ? Math.PI / 2 : -Math.PI / 2;
-        });
+        attacker.isAttacking = true;
+        var dmg = type === 'heat' ? 30 : (type === 'kick' ? 16 : 10);
+        var range = type === 'heat' ? 3.0 : 2.2;
 
-        var midX = (p1.x + p2.x) / 2;
-        var dist = Math.abs(p1.x - p2.x);
-        camera.position.x += (midX - camera.position.x) * 0.1;
-        camera.position.z = Math.max(8, dist * 1.2 + 3);
-        camera.position.y = 3.5;
-        camera.lookAt(midX, 1.5, 0);
+        if (type === 'punch') {
+            attacker.rArm.rotation.x = -Math.PI / 2;
+            attacker.rArm.position.z = 0.5 * attacker.facing;
+        } else if (type === 'kick') {
+            attacker.rLeg.rotation.x = -Math.PI / 2;
+            attacker.rLeg.position.z = 0.6 * attacker.facing;
+        } else if (type === 'heat') {
+            attacker.rArm.rotation.x = -Math.PI / 2;
+            attacker.rArm.position.z = 0.8 * attacker.facing;
+            attacker.heat = Math.max(0, attacker.heat - 50);
+        }
 
-        renderer.render(scene, camera);
-        requestAnimationFrame(gameLoop);
+        var dist = Math.abs(attacker.x - defender.x);
+        if (dist < range) {
+            defender.hp = Math.max(0, defender.hp - dmg);
+            defender.hitStun = 12;
+            defender.x += attacker.facing * (type === 'heat' ? 1.2 : 0.5);
+            cameraShake = type === 'heat' ? 0.6 : 0.25;
+
+            // 스크린샷과 같은 화려한 불꽃/스파크 생성
+            var targetX = defender.x;
+            var targetY = 1.6;
+            var color = type === 'heat' ? 0xff3300 : 0xfacc15;
+            createHitSpark(targetX, targetY, 0, color, type === 'heat' ? 40 : 20);
+
+            // UI 업데이트
+            document.getElementById('p1-hp').style.width = p1.hp + '%';
+            document.getElementById('p2-hp').style.width = p2.hp + '%';
+            document.getElementById('p1-heat').style.width = p1.heat + '%';
+            document.getElementById('p2-heat').style.width = p2.heat + '%';
+
+            if (defender.hp <= 0 && gameState === "PLAY") {
+                gameState = "END";
+                var winner = attacker === p1 ? "1P WINNER!" : "2P WINNER!";
+                document.getElementById('announcer').innerText = winner;
+            }
+        }
+
+        setTimeout(function() {
+            attacker.rArm.rotation.set(0, 0, 0);
+            attacker.rArm.position.set(0.55, 0.2, 0);
+            attacker.rLeg.rotation.set(0, 0, 0);
+            attacker.rLeg.position.set(0.25, -0.9, 0);
+            attacker.isAttacking = false;
+        }, 220);
     }
 
-    gameLoop();
+    function animate() {
+        if (gameState === "PLAY") {
+            // 1P 컨트롤
+            if (p1.hitStun === 0) {
+                if (keys['a']) { p1.x -= 0.12; p1.facing = -1; }
+                if (keys['d']) { p1.x += 0.12; p1.facing = 1; }
+                if (keys['w'] && p1.isGrounded) { p1.vy = 0.22; p1.isGrounded = false; }
+                if (keys['f']) handleAttack(p1, p2, 'punch');
+                if (keys['g']) handleAttack(p1, p2, 'kick');
+                if (keys['r']) handleAttack(p1, p2, 'heat');
+            } else { p1.hitStun--; }
+
+            // 2P 컨트롤
+            if (p2.hitStun === 0) {
+                if (keys['arrowleft']) { p2.x -= 0.12; p2.facing = -1; }
+                if (keys['arrowright']) { p2.x += 0.12; p2.facing = 1; }
+                if (keys['arrowup'] && p2.isGrounded) { p2.vy = 0.22; p2.isGrounded = false; }
+                if (keys['k']) handleAttack(p2, p1, 'punch');
+                if (keys['l']) handleAttack(p2, p1, 'kick');
+                if (keys['o']) handleAttack(p2, p1, 'heat');
+            } else { p2.hitStun--; }
+
+            // 중력 및 이동
+            [p1, p2].forEach(function(p) {
+                p.vy -= 0.012;
+                p.y += p.vy;
+                if (p.y <= 0) { p.y = 0; p.vy = 0; p.isGrounded = true; }
+                p.group.position.set(p.x, p.y, 0);
+                p.group.rotation.y = p.facing === 1 ? Math.PI / 2 : -Math.PI / 2;
+            });
+
+            // 파티클 업데이트
+            for (var i = particles.length - 1; i >= 0; i--) {
+                var pt = particles[i];
+                pt.mesh.position.x += pt.vx;
+                pt.mesh.position.y += pt.vy;
+                pt.mesh.position.z += pt.vz;
+                pt.life -= 0.04;
+                pt.mesh.scale.setScalar(pt.life);
+                if (pt.life <= 0) {
+                    scene.remove(pt.mesh);
+                    particles.splice(i, 1);
+                }
+            }
+
+            // 철권 8 시네마틱 카메라 (줌인/줌아웃 & 셰이크)
+            var midX = (p1.x + p2.x) / 2;
+            var dist = Math.abs(p1.x - p2.x);
+            var targetCamZ = Math.max(7, Math.min(15, dist * 1.1 + 3));
+
+            camera.position.x += (midX - camera.position.x) * 0.1;
+            camera.position.z += (targetCamZ - camera.position.z) * 0.1;
+            camera.position.y = 3.2;
+
+            if (cameraShake > 0) {
+                camera.position.x += (Math.random() - 0.5) * cameraShake;
+                camera.position.y += (Math.random() - 0.5) * cameraShake;
+                cameraShake *= 0.85;
+            }
+
+            camera.lookAt(midX, 1.5, 0);
+        }
+
+        renderer.render(scene, camera);
+        requestAnimationFrame(animate);
+    }
+
+    animate();
 }
 
-window.onload = initSelectGrid;
+window.onload = initTekken8Game;
 </script>
 </body>
 </html>
 """
 
-components.html(GAME_ENGINE_SELECT_3D, height=680)
+components.html(GAME_ENGINE_TEKKEN8, height=680)
