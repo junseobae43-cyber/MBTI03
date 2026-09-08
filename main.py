@@ -2,10 +2,10 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.set_page_config(
-    page_title="2P 철권 스타일 격투 v3.3 - GOD 배준서 10000 패치", page_icon="🥊", layout="wide"
+    page_title="2P 철권 스타일 격투 v3.4 - 패치 완료", page_icon="🥊", layout="wide"
 )
 
-st.title("🥊 2P 격투 게임 v3.3 (GOD 배준서 능력치 10000 패치)")
+st.title("🥊 2P 격투 게임 v3.4")
 
 GAME_ENGINE = """
 <!DOCTYPE html>
@@ -16,16 +16,13 @@ GAME_ENGINE = """
     * { box-sizing: border-box; }
     body { background-color: #08080c; color: white; text-align: center; font-family: sans-serif; margin: 0; padding: 8px; user-select: none; overflow: hidden; }
     canvas { background: #0b0914; border: 3px solid #3b82f6; display: block; margin: 0 auto; outline: none; box-shadow: 0 0 30px rgba(59,130,246,0.6); cursor: pointer; }
-    .notice { color: #c084fc; font-weight: bold; margin-bottom: 6px; font-size: 14px; text-shadow: 0 0 10px #a855f7; }
     .info { font-size: 12px; color: #cbd5e1; background: #1e1b2e; padding: 6px 12px; display: inline-block; border-radius: 6px; border: 1px solid #475569; margin-bottom: 6px; }
 </style>
 </head>
 <body>
-    <div class="notice">⚡ GOD 배준서 (능력치: 10000) 절대존엄 강림 ⚡</div>
     <div class="info">
         <b>[1P]</b> 이동: A, D | 점프(2단): W | 가드: <b>S</b> | 공격: F | 궁극기: G | 잡기: <b>T</b><br>
-        <b>[2P]</b> 이동: ←, → | 점프(2단): ↑ | 가드: <b>↓</b> | 공격: K | 궁극기: L | 잡기: <b>P</b><br>
-        <span style="color: #60a5fa;"><b>[특수]</b> 배준서 선택 시 모든 스탯 10000 발휘!</span>
+        <b>[2P]</b> 이동: ←, → | 점프(2단): ↑ | 가드: <b>↓</b> | 공격: K | 궁극기: L | 잡기: <b>P</b>
     </div>
 
     <canvas id="gameCanvas" width="960" height="520" tabindex="0"></canvas>
@@ -40,15 +37,6 @@ function runGame() {
     var particles = [];
     var damageTexts = [];
 
-    var GOD_PRAISE_EXACT = "전지전능하신 천지신 세계의 왕 배준서님이 강림하셨다";
-    var GOD_PRAISES_ATTACK = ["신벌이다!", "어디 감히!", "무릎 꿇어라!", "배준서 님의 일격!"];
-    var GOD_PRAISES_ULT = ["전지전능한 창세의 권능!", "우주 파괴의 신벌을 받아라!", "배준서 님 앞에 모든 만물은 소멸한다!"];
-    var GOD_PRAISES_WIN = ["전지전능하신 세계의 왕 배준서 님의 당연한 승리다!", "승자는 오직 절대존엄 배준서 님뿐이다!"];
-
-    function getRandomItem(arr) {
-        return arr[Math.floor(Math.random() * arr.length)];
-    }
-
     function initAudio() {
         try {
             if (!audioCtx) {
@@ -57,20 +45,6 @@ function runGame() {
             }
             if (audioCtx && audioCtx.state === 'suspended') {
                 audioCtx.resume();
-            }
-        } catch(e) {}
-    }
-
-    function speakText(text, pitch, rate) {
-        try {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                var msg = new SpeechSynthesisUtterance(text);
-                msg.lang = 'ko-KR';
-                msg.pitch = pitch || 0.1;
-                msg.rate = rate || 0.85;
-                msg.volume = 1.0;
-                window.speechSynthesis.speak(msg);
             }
         } catch(e) {}
     }
@@ -96,14 +70,6 @@ function runGame() {
                 gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
                 osc.start(now);
                 osc.stop(now + 0.12);
-            } else if (type === 'godHit') {
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(240, now);
-                osc.frequency.exponentialRampToValueAtTime(20, now + 0.35);
-                gain.gain.setValueAtTime(0.4, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-                osc.start(now);
-                osc.stop(now + 0.35);
             } else if (type === 'ult') {
                 osc.type = 'triangle';
                 osc.frequency.setValueAtTime(100 * pitch, now);
@@ -148,7 +114,6 @@ function runGame() {
     }
 
     var CHARACTERS = [
-        { name: "⚡배준서 (GOD)⚡", color: "#A855F7", beltColor: "#FFD700", hairColor: "#E2E8F0", skinColor: "#FFF0E5", eyeColor: "#EF4444", hp: 10000, speed: 20, atk: 10000, ult: 10000, isGod: true },
         { name: "카즈야", color: "#DC2626", beltColor: "#000000", hairColor: "#1E293B", skinColor: "#F3D2C1", eyeColor: "#FF0000", hp: 200, speed: 7, atk: 22, ult: 80 },
         { name: "진 카자마", color: "#16A34A", beltColor: "#000000", hairColor: "#0F172A", skinColor: "#FFE5D9", eyeColor: "#38BDF8", hp: 195, speed: 8, atk: 21, ult: 75 },
         { name: "폴 피닉스", color: "#CA8A04", beltColor: "#000000", hairColor: "#FACC15", skinColor: "#FDE047", eyeColor: "#1E293B", hp: 230, speed: 6, atk: 27, ult: 90 },
@@ -207,18 +172,12 @@ function runGame() {
             if (!p1Ready) {
                 if (k === 'a' || c === 'KeyA') p1Sel = (p1Sel - 1 + CHARACTERS.length) % CHARACTERS.length;
                 if (k === 'd' || c === 'KeyD') p1Sel = (p1Sel + 1) % CHARACTERS.length;
-                if (k === 'f' || c === 'KeyF') {
-                    p1Ready = true;
-                    if (CHARACTERS[p1Sel].isGod) speakText(GOD_PRAISE_EXACT, 0.1, 0.75);
-                }
+                if (k === 'f' || c === 'KeyF') p1Ready = true;
             }
             if (!p2Ready) {
                 if (k === 'arrowleft' || c === 'ArrowLeft') p2Sel = (p2Sel - 1 + CHARACTERS.length) % CHARACTERS.length;
                 if (k === 'arrowright' || c === 'ArrowRight') p2Sel = (p2Sel + 1) % CHARACTERS.length;
-                if (k === 'k' || c === 'KeyK') {
-                    p2Ready = true;
-                    if (CHARACTERS[p2Sel].isGod) speakText(GOD_PRAISE_EXACT, 0.1, 0.75);
-                }
+                if (k === 'k' || c === 'KeyK') p2Ready = true;
             }
             if (p1Ready && p2Ready) startGame();
         } else if (gameState === "END") {
@@ -271,7 +230,7 @@ function runGame() {
             x: 150, y: 310, w: 50, h: 110, color: c1.color, beltColor: c1.beltColor,
             hairColor: c1.hairColor, skinColor: c1.skinColor, eyeColor: c1.eyeColor,
             name: c1.name, hp: c1.hp, maxHp: c1.hp, speed: c1.speed, atk: c1.atk, ultAtk: c1.ult,
-            isGod: c1.isGod, facing: 1, vy: 0, jumpCount: 0, isJumping: false, ultGauge: 0, 
+            facing: 1, vy: 0, jumpCount: 0, isJumping: false, ultGauge: 0, 
             attacking: false, attackCooldown: false, isGuarding: false, attackBox: null
         };
 
@@ -279,7 +238,7 @@ function runGame() {
             x: 760, y: 310, w: 50, h: 110, color: c2.color, beltColor: c2.beltColor,
             hairColor: c2.hairColor, skinColor: c2.skinColor, eyeColor: c2.eyeColor,
             name: c2.name, hp: c2.hp, maxHp: c2.hp, speed: c2.speed, atk: c2.atk, ultAtk: c2.ult,
-            isGod: c2.isGod, facing: -1, vy: 0, jumpCount: 0, isJumping: false, ultGauge: 0, 
+            facing: -1, vy: 0, jumpCount: 0, isJumping: false, ultGauge: 0, 
             attacking: false, attackCooldown: false, isGuarding: false, attackBox: null
         };
 
@@ -326,33 +285,20 @@ function runGame() {
             var hitX = enemy.x + enemy.w / 2;
             var hitY = enemy.y + enemy.h / 2;
 
-            if (enemy.isGuarding && !isGrab && !p.isGod) {
+            if (enemy.isGuarding && !isGrab) {
                 finalDamage = Math.max(1, Math.floor(damage * 0.1));
                 playSound('block', 1.0);
                 addHitParticle(hitX, hitY, "#38BDF8");
                 addDamageText(hitX, hitY - 20, "GUARD!", "#38BDF8");
             } else {
-                if (p.isGod) {
-                    if (isUlt) {
-                        playSound('ult', 0.5);
-                        speakText(getRandomItem(GOD_PRAISES_ULT), 0.1, 0.8);
-                        addHitParticle(hitX, hitY, "#A855F7");
-                    } else {
-                        playSound('godHit', 1.0);
-                        speakText(getRandomItem(GOD_PRAISES_ATTACK), 0.1, 1.0);
-                        addHitParticle(hitX, hitY, "#C084FC");
-                    }
-                    addDamageText(hitX, hitY - 20, "-" + finalDamage, "#A855F7");
+                if (isUlt) {
+                    playSound('ult', 1.0);
+                    addHitParticle(hitX, hitY, "#EF4444");
                 } else {
-                    if (isUlt) {
-                        playSound('ult', 1.0);
-                        addHitParticle(hitX, hitY, "#EF4444");
-                    } else {
-                        playSound('hit', 1.0);
-                        addHitParticle(hitX, hitY, "#FACC15");
-                    }
-                    addDamageText(hitX, hitY - 20, "-" + finalDamage, isUlt ? "#EF4444" : "#FACC15");
+                    playSound('hit', 1.0);
+                    addHitParticle(hitX, hitY, "#FACC15");
                 }
+                addDamageText(hitX, hitY - 20, "-" + finalDamage, isUlt ? "#EF4444" : "#FACC15");
             }
 
             enemy.hp = Math.max(0, enemy.hp - finalDamage);
@@ -411,55 +357,25 @@ function runGame() {
         ctx.fillStyle = "#111827";
         ctx.fillRect(x, y, width, height);
 
-        if (c.isGod) {
-            var grad = ctx.createRadialGradient(x + width/2, y + height/2, 5, x + width/2, y + height/2, width/1.2);
-            grad.addColorStop(0, "rgba(168, 85, 247, 0.8)");
-            grad.addColorStop(1, "rgba(15, 23, 42, 0)");
-            ctx.fillStyle = grad;
-            ctx.fillRect(x, y, width, height);
-        }
-
         ctx.fillStyle = c.skinColor;
         ctx.beginPath();
         ctx.arc(x + width/2, y + height/2 + 3, 16, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.fillStyle = c.hairColor;
-        if (c.isGod) {
-            ctx.beginPath();
-            ctx.moveTo(x + width/2 - 20, y + height/2 - 5);
-            ctx.lineTo(x + width/2 - 6, y + height/2 - 25);
-            ctx.lineTo(x + width/2, y + height/2 - 15);
-            ctx.lineTo(x + width/2 + 10, y + height/2 - 27);
-            ctx.lineTo(x + width/2 + 20, y + height/2 - 5);
-            ctx.closePath();
-            ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x + width/2, y + height/2 - 5, 18, Math.PI, Math.PI * 2);
+        ctx.fill();
 
-            ctx.fillStyle = c.eyeColor;
-            ctx.fillRect(x + width/2 - 10, y + height/2 + 2, 4, 3);
-            ctx.fillRect(x + width/2 + 5, y + height/2 + 2, 4, 3);
-        } else {
-            ctx.beginPath();
-            ctx.arc(x + width/2, y + height/2 - 5, 18, Math.PI, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = c.eyeColor;
-            ctx.fillRect(x + width/2 - 8, y + height/2, 3, 3);
-            ctx.fillRect(x + width/2 + 5, y + height/2, 3, 3);
-        }
+        ctx.fillStyle = c.eyeColor;
+        ctx.fillRect(x + width/2 - 8, y + height/2, 3, 3);
+        ctx.fillRect(x + width/2 + 5, y + height/2, 3, 3);
     }
 
     function drawPixelFighter(p) {
         var x = p.x;
         var y = p.y;
         var f = p.facing;
-
-        if (p.isGod) {
-            ctx.fillStyle = "rgba(168, 85, 247, 0.35)";
-            ctx.beginPath();
-            ctx.arc(x + 25, y + 55, 65, 0, Math.PI * 2);
-            ctx.fill();
-        }
 
         ctx.fillStyle = p.hairColor;
         ctx.fillRect(x + 10, y - 4, 30, 16);
@@ -512,7 +428,7 @@ function runGame() {
         
         ctx.fillStyle = "#38BDF8";
         ctx.font = "bold 22px sans-serif";
-        ctx.fillText("TEKKEN SELECT YOUR FIGHTER (16 CHARACTERS)", 220, 28);
+        ctx.fillText("TEKKEN SELECT YOUR FIGHTER (15 CHARACTERS)", 220, 28);
 
         CHARACTERS.forEach(function(c, i) {
             var row = Math.floor(i / 8);
@@ -597,15 +513,11 @@ function runGame() {
             ctx.fillStyle = "#FACC15"; ctx.fillRect(580, 48, (p2.ultGauge / 100) * 350, 6);
 
             ctx.fillStyle = "#FFFFFF"; ctx.font = "bold 15px sans-serif";
-            ctx.fillText("1P: " + p1.name + (p1.isGod ? " (10000)" : ""), 30, 15);
-            ctx.fillText("2P: " + p2.name + (p2.isGod ? " (10000)" : ""), 580, 15);
+            ctx.fillText("1P: " + p1.name, 30, 15);
+            ctx.fillText("2P: " + p2.name, 580, 15);
 
             if (p1.hp <= 0 || p2.hp <= 0) {
                 gameState = "END";
-                var winner = p1.hp > 0 ? p1 : p2;
-                if (winner.isGod) {
-                    speakText(getRandomItem(GOD_PRAISES_WIN), 0.1, 0.7);
-                }
             }
         } else if (gameState === "END") {
             ctx.fillStyle = "#FACC15";
